@@ -53,7 +53,6 @@ import AdminSetting from "../Admindashboard/pages/AdminSetting/AdminSetting";
 import GameApiKey from "../Admindashboard/pages/GameApiKey/GameApiKey";
 import HomeControl from "../Admindashboard/pages/HomeControl/HomeControl";
 import ColorControl from "../Admindashboard/pages/ColorControl/ColorControl";
-import AddGameApiKey from "../Admindashboard/pages/AddGameApiKey/AddGameApiKey";
 import LiveGame from "../Admindashboard/pages/LiveGame/LiveGame";
 import ActiveGame from "../Admindashboard/pages/ActiveGame/ActiveGame";
 import DeactiveGame from "../Admindashboard/pages/DeactiveGame/DeactiveGame";
@@ -92,6 +91,9 @@ import SubAdminPrivateRoute from "../routes/SubAdminPrivateRoute";
 import MasterPrivateRoute from "../routes/MasterPrivateRoute";
 import AgentPrivateRoute from "../routes/AgentPrivateRoute";
 import SubAgentPrivateRoute from "../routes/SubAgentPrivateRoute";
+import AddGameCategory from "../Admindashboard/pages/AddGameCategory/AddGameCategory";
+import AddGame from "../Admindashboard/pages/AddGame/AddGame";
+import TransactionHistory from "../Admindashboard/pages/TransactionHistory/TransactionHistory";
 
 export const router = createBrowserRouter([
   {
@@ -110,20 +112,20 @@ export const router = createBrowserRouter([
             index: true,
             Component: DekstopMyProfile,
           },
-          {
-            path: "my-wallet",
-            Component: WalletLayout,
-            children: [
-              {
-                index: true,
-                Component: Deposit,
-              },
-              {
-                path: "withdraw",
-                Component: Withdraw,
-              },
-            ],
-          },
+          // {
+          //   path: "my-wallet",
+          //   Component: WalletLayout,
+          //   children: [
+          //     {
+          //       index: true,
+          //       Component: Deposit,
+          //     },
+          //     {
+          //       path: "withdraw",
+          //       Component: Withdraw,
+          //     },
+          //   ],
+          // },
           {
             path: "billing-records",
             Component: BillingLayout,
@@ -370,8 +372,12 @@ export const router = createBrowserRouter([
         element: <ColorControl />,
       },
       {
-        path: "add-game-api-key",
-        element: <AddGameApiKey />,
+        path: "add-game-category",
+        element: <AddGameCategory />,
+      },
+      {
+        path: "add-game",
+        element: <AddGame />,
       },
       {
         path: "live-game",
@@ -451,11 +457,16 @@ export const router = createBrowserRouter([
       },
       {
         path: "check-users-payment",
-        element: <CheckUserPayment></CheckUserPayment>
-      },{
+        element: <CheckUserPayment></CheckUserPayment>,
+      },
+      {
         path: "deposit-history",
-        element: <DepositHistory></DepositHistory>
-      }
+        element: <DepositHistory></DepositHistory>,
+      },
+      {
+        path: "transaction-history",
+        element: <TransactionHistory></TransactionHistory>,
+      },
     ],
   },
   // Sub Admin Dashboard
@@ -544,8 +555,8 @@ export const router = createBrowserRouter([
         element: <ColorControl />,
       },
       {
-        path: "add-game-api-key",
-        element: <AddGameApiKey />,
+        path: "add-game-category",
+        element: <AddGameCategory />,
       },
       {
         path: "live-game",
@@ -625,11 +636,16 @@ export const router = createBrowserRouter([
       },
       {
         path: "check-users-payment",
-        element: <CheckUserPayment></CheckUserPayment>
-      },{
+        element: <CheckUserPayment></CheckUserPayment>,
+      },
+      {
         path: "deposit-history",
-        element: <DepositHistory></DepositHistory>
-      }
+        element: <DepositHistory></DepositHistory>,
+      },
+      {
+        path: "transaction-history",
+        element: <TransactionHistory></TransactionHistory>,
+      },
     ],
   },
   // Master Admin Dashboard
@@ -718,8 +734,8 @@ export const router = createBrowserRouter([
         element: <ColorControl />,
       },
       {
-        path: "add-game-api-key",
-        element: <AddGameApiKey />,
+        path: "add-game-category",
+        element: <AddGameCategory />,
       },
       {
         path: "live-game",
@@ -799,11 +815,16 @@ export const router = createBrowserRouter([
       },
       {
         path: "check-users-payment",
-        element: <CheckUserPayment></CheckUserPayment>
-      },{
+        element: <CheckUserPayment></CheckUserPayment>,
+      },
+      {
         path: "deposit-history",
-        element: <DepositHistory></DepositHistory>
-      }
+        element: <DepositHistory></DepositHistory>,
+      },
+      {
+        path: "transaction-history",
+        element: <TransactionHistory></TransactionHistory>,
+      },
     ],
   },
   // Agent Dashboard
@@ -892,8 +913,8 @@ export const router = createBrowserRouter([
         element: <ColorControl />,
       },
       {
-        path: "add-game-api-key",
-        element: <AddGameApiKey />,
+        path: "add-game-category",
+        element: <AddGameCategory />,
       },
       {
         path: "live-game",
@@ -973,11 +994,17 @@ export const router = createBrowserRouter([
       },
       {
         path: "check-users-payment",
-        element: <CheckUserPayment></CheckUserPayment>
-      },{
+        element: <CheckUserPayment></CheckUserPayment>,
+      },
+      {
         path: "deposit-history",
-        element: <DepositHistory></DepositHistory>
-      }
+        element: <DepositHistory></DepositHistory>,
+      },
+      ,
+      {
+        path: "transaction-history",
+        element: <TransactionHistory></TransactionHistory>,
+      },
     ],
   },
   // sub-agent Dashboard
@@ -1066,8 +1093,8 @@ export const router = createBrowserRouter([
         element: <ColorControl />,
       },
       {
-        path: "add-game-api-key",
-        element: <AddGameApiKey />,
+        path: "add-game-category",
+        element: <AddGameCategory />,
       },
       {
         path: "live-game",
@@ -1147,11 +1174,16 @@ export const router = createBrowserRouter([
       },
       {
         path: "check-users-payment",
-        element: <CheckUserPayment></CheckUserPayment>
-      },{
+        element: <CheckUserPayment></CheckUserPayment>,
+      },
+      {
         path: "deposit-history",
-        element: <DepositHistory></DepositHistory>
-      }
+        element: <DepositHistory></DepositHistory>,
+      },
+      {
+        path: "transaction-history",
+        element: <TransactionHistory></TransactionHistory>,
+      },
     ],
   },
   {

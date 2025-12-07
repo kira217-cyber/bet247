@@ -15,7 +15,7 @@ const FavAndTitleControl = () => {
   // Fetch settings
   const fetchSettings = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/settings");
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/settings`);
       if (data) {
         setTitle(data.title || "");
         setFavicon(data.faviconUrl || null);
@@ -46,7 +46,7 @@ const FavAndTitleControl = () => {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/settings", formData, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/settings`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       toast.success("Settings updated!");
@@ -60,7 +60,7 @@ const FavAndTitleControl = () => {
   // Delete Favicon
   const handleDeleteFavicon = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/settings/favicon/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/settings/favicon/${id}`);
       toast.error("Favicon deleted!");
       fetchSettings();
       setIsDeleteModalOpen(false);

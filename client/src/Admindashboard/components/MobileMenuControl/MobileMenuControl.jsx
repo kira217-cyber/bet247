@@ -14,7 +14,7 @@ const [loginPageBgColor,setLoginPageBgColor] = useState("#ffffff")
   // Load existing settings
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/mobilemenu")
+      .get(`${import.meta.env.VITE_API_URL}/api/mobilemenu`)
       .then((res) => {
         const data = res.data;
         setLoginBtnColor(data.loginBtnColor || "#4CAF50");
@@ -34,7 +34,7 @@ const [loginPageBgColor,setLoginPageBgColor] = useState("#ffffff")
     if (!isEditing) return;
 
     try {
-      await axios.post("http://localhost:5000/api/mobilemenu", {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/mobilemenu`, {
         loginBtnColor,
         signupBtnColor,
         btnFontSize: Number(btnFontSize),

@@ -7,7 +7,7 @@ const SocialMediaUrlControl = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/sidebar-menu")
+    axios.get(`${import.meta.env.VITE_API_URL}/api/sidebar-menu`)
       .then(res => setMenuItems(res.data.sidebarMenu || []))
       .catch(err => console.error(err));
   }, []);
@@ -23,7 +23,7 @@ const SocialMediaUrlControl = () => {
     if (!isEditing) return;
 
     try {
-      await axios.post("http://localhost:5000/api/sidebar-menu", { sidebarMenu: menuItems });
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/sidebar-menu`, { sidebarMenu: menuItems });
       toast.success("Sidebar menu links updated!");
       setIsEditing(false);
     } catch (err) {

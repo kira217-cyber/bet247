@@ -40,7 +40,7 @@ const LogoControl = () => {
     formData.append("logo", file);
 
     try {
-      await axios.post("http://localhost:5000/api/logo", formData, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/logo`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -54,7 +54,7 @@ const LogoControl = () => {
 
   const fetchDeleteLogo = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/logo"); // ধরে নিচ্ছি আপনার GET API আছে
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/logo`); // ধরে নিচ্ছি আপনার GET API আছে
       setLogos(res.data);
       console.log(res.data);
     } catch (err) {
@@ -64,7 +64,7 @@ const LogoControl = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/logo/${selectedLogoId}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/logo/${selectedLogoId}`);
       fetchDeleteLogo(); // Refresh list
       setIsDeleteModalOpen(false);
       toast.error("Logo deleted successfully!");

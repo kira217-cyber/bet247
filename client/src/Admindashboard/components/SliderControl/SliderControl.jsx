@@ -15,7 +15,7 @@ const SliderControl = () => {
   // ✅ স্লাইডার ডাটা ফেচ
   const fetchSliders = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/sliders");
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/sliders`);
       setSliders(res.data);
       console.log(res.data);
     } catch (err) {
@@ -53,7 +53,7 @@ const SliderControl = () => {
     formData.append("slider", file);
 
     try {
-      await axios.post("http://localhost:5000/api/sliders", formData, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/sliders`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       toast.success("Slider uploaded successfully!");
@@ -70,7 +70,7 @@ const SliderControl = () => {
   const handleDelete = async () => {
     try {
       await axios.delete(
-        `http://localhost:5000/api/sliders/${selectedSliderId}`
+        `${import.meta.env.VITE_API_URL}/api/sliders/${selectedSliderId}`
       );
       toast.error("Slider deleted successfully!");
       setIsDeleteModalOpen(false);

@@ -27,7 +27,7 @@ import axios from "axios";
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ username: "", password: "" });
   const navigate = useNavigate();
@@ -42,7 +42,8 @@ const Navbar = () => {
     loginUser,
     logoutUserData,
     loginUserData,
-    currency, userBalance
+    currency,
+    userBalance,
   } = useContext(AuthContext);
 
   const { bgColor, textColor, fontSize, bgButtonColor, signUpButtonBgColor } =
@@ -82,7 +83,7 @@ const Navbar = () => {
       );
 
       toast.success("Login Successful!");
-      console.log(res)
+      console.log(res);
 
       // Save to AuthContext & localStorage
       loginUserData(res.data.user);
@@ -94,8 +95,6 @@ const Navbar = () => {
       console.log(error.response?.data?.message || "Login failed");
     }
   };
-
-
 
   // gradient direction map
   const directionMap = {
@@ -151,7 +150,10 @@ const Navbar = () => {
         >
           {!isLoggedIn ? (
             // যখন লগইন হয়নি তখন লগইন ইনপুট আর বাটন দেখাবে
-            <form onSubmit={handleLogin} className="flex items-center space-x-2">
+            <form
+              onSubmit={handleLogin}
+              className="flex items-center space-x-2"
+            >
               <div className="hidden lg:flex items-center space-x-2">
                 <FaUser className="text-yellow-300" />
                 <input
@@ -186,7 +188,7 @@ const Navbar = () => {
                     className="w-full px-2 py-1 text-black rounded-md text-sm bg-white pr-12"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-black font-bold">
-                    9558
+                    {Math.floor(1000 + Math.random() * 9000)}
                   </span>
                 </div>
               </div>
@@ -212,7 +214,7 @@ const Navbar = () => {
                 <Link to="/login">Login</Link>
               </button>
 
-              <button
+              {/* <button
                 className="px-3 py-1 rounded "
                 style={{
                   backgroundColor: signUpButtonBgColor,
@@ -221,7 +223,7 @@ const Navbar = () => {
                 }}
               >
                 <Link to="/signup">Signup</Link>
-              </button>
+              </button> */}
             </form>
           ) : (
             <div className="flex items-center gap-1">
@@ -234,9 +236,7 @@ const Navbar = () => {
                 <span className="flex text-[8px] md:text-[16px] text-white font-bold">
                   Main {currency}{" "}
                 </span>
-                <span className="font-bold ml-1 text-white">
-                  {userBalance}
-                </span>
+                <span className="font-bold ml-1 text-white">{userBalance}</span>
                 <span className="ml-1 text-white">Exposure</span>
                 <span className=" text-red-600 px-1 rounded text-xs">0</span>
                 <button className="ml-1 bg-green-600 text-white px-2 rounded text-xs font-bold">
@@ -354,15 +354,7 @@ const Navbar = () => {
         }}
       >
         <div className="flex px-4 md:px-8 py-2 space-x-6 font-medium">
-          {[
-            "Home",
-            "Play-In",
-            "Multi",
-            "Cricket",
-            "Soccer",
-            "Tennis",
-            "Result",
-          ].map((item, index) => {
+          {["Home", "Play-In", "Multi"].map((item, index) => {
             const [hover, setHover] = React.useState(false);
             return (
               <NavLink
@@ -382,21 +374,7 @@ const Navbar = () => {
               </NavLink>
             );
           })}
-          <a
-            href="#"
-            style={{
-              color: webMenuTextColor,
-              transition: "color 0.3s",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.color = webMenuHoverColor)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.color = webMenuTextColor)
-            }
-          >
-            Casino
-          </a>
+          
         </div>
 
         <div className="flex px-4 md:px-8 py-2 space-x-6 font-medium ml-auto">
@@ -456,7 +434,7 @@ const Navbar = () => {
                 >
                   <Link to="/login">Login</Link>
                 </button>
-                <button
+                {/* <button
                   style={{
                     backgroundColor: signupBtnColor,
                     fontSize: `${btnFontSize}px`,
@@ -465,7 +443,7 @@ const Navbar = () => {
                   className="px-3 py-1 rounded"
                 >
                   <Link to="/signup">Sign Up</Link>
-                </button>
+                </button> */}
               </div>
             ) : (
               <p className="mt-2">
@@ -526,7 +504,8 @@ const Navbar = () => {
 
           {/* Bottom Buttons */}
           <div className="mt-auto flex space-x-3">
-            <div
+            <NavLink
+              to="/"
               style={{
                 backgroundImage: `linear-gradient(${gradientCSSDirection}, ${gradientFrom}, ${gradientTo})`,
                 color: sideTextColor,
@@ -535,7 +514,7 @@ const Navbar = () => {
             >
               <FaHome />
               <span>Home</span>
-            </div>
+            </NavLink>
 
             {!isLoggedIn ? (
               <div

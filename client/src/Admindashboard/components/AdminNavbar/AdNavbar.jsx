@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import { NavLink } from "react-router"; // <-- সঠিক ইম্পোর্ট
+import { NavLink } from "react-router"; // সঠিক ইম্পোর্ট
 import {
   FaBars,
   FaTimes,
@@ -9,6 +9,7 @@ import {
   FaMicrophone,
 } from "react-icons/fa";
 import { AuthContext } from "../../../context/AuthContext";
+import { toast } from "react-toastify";
 
 const AdNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,10 +31,12 @@ const AdNavbar = () => {
     Master: "/master-dashboard",
     Agent: "/agent-dashboard",
     "Sub Agent": "/sub-agent-dashboard",
-    // যদি কোনো role ম্যাচ না করে তাহলে ডিফল্ট admin-dashboard
   };
 
   const basePath = dashboardBaseByRole[user?.role] || "/admin-dashboard";
+
+  // Mother Admin কিনা চেক করা
+  const isMotherAdmin = user?.role === "Mother Admin";
 
   // সব রাউটে basePath যোগ করে নতুন navItems তৈরি করা হলো
   const navItems = [
@@ -49,17 +52,26 @@ const AdNavbar = () => {
         { name: "Mother Admin", path: `${basePath}/admin` },
       ],
     },
-    {
-      name: "Setting",
-      dropdown: [
-        { name: "General Setting", path: `${basePath}/general-setting` },
-        { name: "Admin Setting", path: `${basePath}/admin-setting` },
-        { name: "Game Api Key", path: `${basePath}/game-api-key` },
-        { name: "Home Control", path: `${basePath}/home-control` },
-        { name: "Color Control", path: `${basePath}/color-control` },
-        { name: "Add Game Api key", path: `${basePath}/add-game-api-key` },
-      ],
-    },
+    // শুধু Mother Admin এর জন্য Setting দেখাবে
+    ...(isMotherAdmin
+      ? [
+          {
+            name: "Setting",
+            dropdown: [
+              { name: "General Setting", path: `${basePath}/general-setting` },
+              { name: "Admin Setting", path: `${basePath}/admin-setting` },
+              { name: "Game Api Key", path: `${basePath}/game-api-key` },
+              { name: "Home Control", path: `${basePath}/home-control` },
+              { name: "Color Control", path: `${basePath}/color-control` },
+              {
+                name: "Add Game Category",
+                path: `${basePath}/add-game-category`,
+              },
+              { name: "Add Game", path: `${basePath}/add-game` },
+            ],
+          },
+        ]
+      : []),
     { name: "My Account", path: `${basePath}/my-account` },
     { name: "BetList", path: `${basePath}/bet-lists` },
     { name: "BetListLive", path: `${basePath}/bet-list-live` },
@@ -67,11 +79,12 @@ const AdNavbar = () => {
       name: "Banking",
       dropdown: [
         { name: "Money Transfer", path: `${basePath}/banking` },
-        {
-          name: "Check Users Payment",
-          path: `${basePath}/check-users-payment`,
-        },
-        { name: "Deposit History", path: `${basePath}/deposit-history` },
+        // {
+        //   name: "Check Users Payment",
+        //   path: `${basePath}/check-users-payment`,
+        // },
+        // { name: "Deposit History", path: `${basePath}/deposit-history` },
+        { name: "Transaction History", path: `${basePath}/transaction-history` },
       ],
     },
     {
@@ -220,7 +233,7 @@ const AdNavbar = () => {
                   <NavLink
                     key={index}
                     to={item.path}
-                    end={item.path === basePath} // Dashboard এর জন্য end=true
+                    end={item.path === basePath}
                     className={({ isActive }) =>
                       `px-3 py-2 ${
                         isActive

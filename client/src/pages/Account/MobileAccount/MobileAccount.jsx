@@ -20,18 +20,23 @@ import {
   MdGroupAdd,
 } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
-import { NavLink } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 import { AuthContext } from "../../../context/AuthContext";
 
 const MobileAccount = () => {
   const [showAmount, setShowAmount] = useState(false);
   const [amount, setAmount] = useState(0);
-  const {userBalance,currency} = useContext(AuthContext)
+  const { userBalance, currency, loginUser, logoutUserData } =
+    useContext(AuthContext);
+  const navigate = useNavigate();
 
   // রিফ্রেশ বাটনে ক্লিক করলে নতুন ভ্যালু সেট করার ডেমো ফাংশন
   const handleReload = () => {
-    
     setAmount(userBalance);
+  };
+  const handleLogout = () => {
+    logoutUserData(); // লগআউট ফাংশন কল
+    navigate("/"); // হোম পেজে নিয়ে যাও
   };
   return (
     <>
@@ -44,10 +49,10 @@ const MobileAccount = () => {
         {/* Header */}
         <div className="relative bg-gradient-to-b from-yellow-400 to-yellow-600 p-5 flex items-center">
           <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-orange-600">
-            R
+            U
           </div>
           <div className="ml-3">
-            <h2 className="font-semibold text-lg">rai7</h2>
+            <h2 className="font-semibold text-lg">{loginUser?.username}</h2>
             <p className="text-xs bg-gray-800 px-2 py-0.5 rounded-md mt-1 inline-block">
               VIP Points (VP) <span className="text-green-400">0.00</span> | My
               VIP »
@@ -70,7 +75,7 @@ const MobileAccount = () => {
           {/* Right side */}
           <div className="flex items-center gap-2">
             <p className="text-yellow-400 font-semibold">
-             {currency} {showAmount ? `৳ ${userBalance}` : "****"}
+              {currency} {showAmount ? `৳ ${userBalance}` : "****"}
             </p>
             <button onClick={() => setShowAmount(!showAmount)}>
               {showAmount ? (
@@ -89,7 +94,7 @@ const MobileAccount = () => {
           <hr className="w-full mb-5" />
           <div className="grid grid-cols-4 gap-3 text-center">
             {/* Deposit */}
-            <div className="flex flex-col items-center">
+            {/* <div className="flex flex-col items-center">
               <div className="bg-gray-700 w-12 h-12 flex items-center justify-center rounded-md">
                 <NavLink to="/profile/my-wallet">
                   {" "}
@@ -97,7 +102,7 @@ const MobileAccount = () => {
                 </NavLink>
               </div>
               <p className="text-white mt-1">Deposit</p>
-            </div>
+            </div> */}
 
             {/* Dispute */}
             <div className="flex flex-col items-center">
@@ -111,7 +116,7 @@ const MobileAccount = () => {
             </div>
 
             {/* My Wallet */}
-            <div className="flex flex-col items-center">
+            {/* <div className="flex flex-col items-center">
               <div className="bg-gray-700 w-12 h-12 flex items-center justify-center rounded-md">
                 <NavLink to="/profile/my-wallet">
                   {" "}
@@ -119,10 +124,10 @@ const MobileAccount = () => {
                 </NavLink>
               </div>
               <p className="text-white mt-1">My Wallet</p>
-            </div>
+            </div> */}
 
             {/* Withdrawal */}
-            <div className="flex flex-col items-center">
+            {/* <div className="flex flex-col items-center">
               <div className="bg-gray-700 w-12 h-12 flex items-center justify-center rounded-md">
                 <NavLink to="/profile/my-wallet/withdraw">
                   {" "}
@@ -130,7 +135,7 @@ const MobileAccount = () => {
                 </NavLink>
               </div>
               <p className="text-white mt-1">Withdrawal</p>
-            </div>
+            </div> */}
           </div>
         </div>
         {/* MY P&L */}
@@ -284,7 +289,10 @@ const MobileAccount = () => {
           </div>
         </div>
         {/* Logout */}
-        <p className="p-4 flex items-center gap-1 justify-center bg-gray-600 mt-5 rounded-sm text-white font-bold py-3 hover:cursor-pointer">
+        <p
+          onClick={handleLogout}
+          className="p-4 flex items-center gap-1 justify-center bg-gray-600 mt-5 rounded-sm text-white font-bold py-3 hover:cursor-pointer"
+        >
           <CiLogin size={18} /> Logout
         </p>
       </div>

@@ -33,12 +33,16 @@ let adminLoginImageCollection;
 let navbarSettingsCollection;
 let webMenuSettingsCollection;
 let mobileMenuSettingsCollection;
-let mobileSidebarStyleCollection
+let mobileSidebarStyleCollection;
 let footerSettingsCollection;
 let mobileSidebarMenuCollection;
 let transactions;
 let depositSettingsCollection;
 let depositTransactionsCollection;
+let gameCategoriesCollection;
+let selectedGamesCollection;
+let gameHistoryCollection;
+
 async function run() {
   try {
     await client.connect();
@@ -54,13 +58,16 @@ async function run() {
     adminLoginImageCollection = db.collection("admin-login-image");
     navbarSettingsCollection = db.collection("navbar_settings");
     webMenuSettingsCollection = db.collection("web_menu_settings");
-    mobileMenuSettingsCollection =db.collection("mobile_menu_settings");
+    mobileMenuSettingsCollection = db.collection("mobile_menu_settings");
     mobileSidebarStyleCollection = db.collection("mobile_sidebar_settings");
     footerSettingsCollection = db.collection("footer_settings");
     mobileSidebarMenuCollection = db.collection("url_settings");
     transactions = db.collection("transactions");
     depositSettingsCollection = db.collection("deposit_settings");
     depositTransactionsCollection = db.collection("deposit_transactions");
+    gameCategoriesCollection = db.collection("game_categories");
+    selectedGamesCollection = db.collection("selected_games");
+    gameHistoryCollection = db.collection("game_history"); // গেম হিস্ট্রি
 
     console.log("✅ MongoDB Connected Successfully!");
   } catch (error) {
@@ -101,15 +108,15 @@ const uploadSlider = multer({ storage: sliderStorage });
 
 app.get("/admins", async (req, res) => {
   try {
-    const { search = '', page = 1, limit = 15 } = req.query;
+    const { search = "", page = 1, limit = 15 } = req.query;
 
     // Build the query with search across username, fullname, and email
     const query = {};
     if (search) {
       query.$or = [
-        { username: { $regex: search, $options: 'i' } },
-        { fullname: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
+        { username: { $regex: search, $options: "i" } },
+        { fullname: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -131,23 +138,22 @@ app.get("/admins", async (req, res) => {
 });
 
 // GET /api/admins/:id
-app.get('/api/admins/:id', async (req, res) => {
+app.get("/api/admins/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    const admin = await adminsCollection.findOne({ _id: new ObjectId(id) }, { projection: { password: 0 } }); // password বাদ দিয়ে
-    if (!admin) return res.status(404).json({ error: 'Admin not found' });
+    const admin = await adminsCollection.findOne(
+      { _id: new ObjectId(id) },
+      { projection: { password: 0 } }
+    ); // password বাদ দিয়ে
+    if (!admin) return res.status(404).json({ error: "Admin not found" });
     res.json(admin);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-
 // admin put
-
-
-
 
 // Update Admin Profile with Role Check
 app.put("/api/admins/:id", async (req, res) => {
@@ -161,7 +167,9 @@ app.put("/api/admins/:id", async (req, res) => {
     }
 
     // modifier কে খুঁজে বের করা
-    const editor = await adminsCollection.findOne({ _id: new ObjectId(editorId) });
+    const editor = await adminsCollection.findOne({
+      _id: new ObjectId(editorId),
+    });
     if (!editor) {
       return res.status(403).json({ error: "Invalid editor" });
     }
@@ -179,7 +187,7 @@ app.put("/api/admins/:id", async (req, res) => {
       "Master",
       "Agent",
       "Sub Agent",
-      "User"
+      "User",
     ];
 
     const editorRank = hierarchy.indexOf(editor.role);
@@ -191,7 +199,9 @@ app.put("/api/admins/:id", async (req, res) => {
     }
 
     if (editorRank >= targetRank) {
-      return res.status(403).json({ error: "You are not allowed to modify this admin" });
+      return res
+        .status(403)
+        .json({ error: "You are not allowed to modify this admin" });
     }
 
     // password খালি থাকলে বাদ দিন
@@ -325,14 +335,13 @@ app.post("/api/admins", async (req, res) => {
   }
 });
 
-
 // role hierarchy define করে দিচ্ছি
 const roleHierarchy = {
   "Mother Admin": ["Sub Admin", "Master", "Agent", "Sub Agent", "User"],
   "Sub Admin": ["Master", "Agent", "Sub Agent", "User"],
-  "Master": ["Agent", "Sub Agent", "User"],
-  "Agent": ["Sub Agent", "User"],
-  "Sub Agent" : ["User"]
+  Master: ["Agent", "Sub Agent", "User"],
+  Agent: ["Sub Agent", "User"],
+  "Sub Agent": ["User"],
 };
 
 // ✅ Update user status (Activate/Deactivate)
@@ -343,7 +352,9 @@ app.patch("/api/admins/:id/status", async (req, res) => {
 
     // Action valid কিনা check
     if (!["Activate", "Deactivate"].includes(action)) {
-      return res.status(400).json({ success: false, message: "Invalid action" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid action" });
     }
 
     // Permission check
@@ -363,9 +374,10 @@ app.patch("/api/admins/:id/status", async (req, res) => {
     );
 
     if (result.modifiedCount === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found or already same status" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found or already same status",
+      });
     }
 
     res.json({
@@ -376,7 +388,6 @@ app.patch("/api/admins/:id/status", async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
-
 
 // Ban user (Mother Admin only)
 app.patch("/api/admins/:id/ban", async (req, res) => {
@@ -422,7 +433,7 @@ app.post("/api/logo", upload.single("logo"), async (req, res) => {
 
     console.log("✅ File received:", req.file);
 
-    const logoUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+    const logoUrl = `${process.env.API_URL}/uploads/${req.file.filename}`;
     console.log("✅ Generated logoUrl:", logoUrl);
 
     const existing = await logoCollection.findOne({});
@@ -491,7 +502,7 @@ app.post("/api/sliders", uploadSlider.single("slider"), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+    const imageUrl = `${process.env.API_URL}/uploads/${req.file.filename}`;
     const newSlider = { imageUrl, filename: req.file.filename };
 
     const result = await sliderCollection.insertOne(newSlider);
@@ -546,7 +557,7 @@ app.post("/api/settings", upload.single("favicon"), async (req, res) => {
     let faviconUrl = null;
 
     if (req.file) {
-      faviconUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+      faviconUrl = `${process.env.API_URL}/uploads/${req.file.filename}`;
     }
 
     const existing = await settingsCollection.findOne({});
@@ -597,7 +608,7 @@ app.post(
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+      const imageUrl = `${process.env.API_URL}/uploads/${req.file.filename}`;
       const existing = await signupImageCollection.findOne({});
 
       if (existing) {
@@ -668,7 +679,7 @@ app.post("/api/login-image", upload.single("loginImage"), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+    const imageUrl = `${process.env.API_URL}/uploads/${req.file.filename}`;
     const existing = await loginImageCollection.findOne({});
 
     if (existing) {
@@ -732,7 +743,7 @@ app.post(
     try {
       if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-      const loginImageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+      const loginImageUrl = `${process.env.API_URL}/uploads/${req.file.filename}`;
 
       const existing = await adminLoginImageCollection.findOne({});
       if (existing) {
@@ -836,7 +847,6 @@ app.post("/api/navbar", async (req, res) => {
   }
 });
 
-
 // GET Web Menu Settings
 app.get("/api/webmenu", async (req, res) => {
   try {
@@ -854,16 +864,34 @@ app.get("/api/webmenu", async (req, res) => {
 // CREATE or UPDATE Web Menu Settings
 app.post("/api/webmenu", async (req, res) => {
   try {
-    const { webMenuBgColor, webMenuTextColor, webMenuFontSize, webMenuHoverColor } = req.body;
+    const {
+      webMenuBgColor,
+      webMenuTextColor,
+      webMenuFontSize,
+      webMenuHoverColor,
+    } = req.body;
     const existing = await webMenuSettingsCollection.findOne({});
 
     if (existing) {
       // Update
       await webMenuSettingsCollection.updateOne(
         { _id: existing._id },
-        { $set: { webMenuBgColor, webMenuTextColor, webMenuFontSize, webMenuHoverColor } }
+        {
+          $set: {
+            webMenuBgColor,
+            webMenuTextColor,
+            webMenuFontSize,
+            webMenuHoverColor,
+          },
+        }
       );
-      res.json({ ...existing, webMenuBgColor, webMenuTextColor, webMenuFontSize, webMenuHoverColor });
+      res.json({
+        ...existing,
+        webMenuBgColor,
+        webMenuTextColor,
+        webMenuFontSize,
+        webMenuHoverColor,
+      });
     } else {
       // Insert new
       const result = await webMenuSettingsCollection.insertOne({
@@ -895,7 +923,9 @@ app.get("/api/mobilemenu", async (req, res) => {
   try {
     const menuSettings = await mobileMenuSettingsCollection.findOne({});
     if (!menuSettings)
-      return res.status(404).json({ message: "Mobile menu settings not found" });
+      return res
+        .status(404)
+        .json({ message: "Mobile menu settings not found" });
 
     res.json(menuSettings);
   } catch (error) {
@@ -931,7 +961,7 @@ app.post("/api/mobilemenu", async (req, res) => {
             pageBgColor,
             pageFontSize,
             buttonFontColor,
-            loginPageBgColor
+            loginPageBgColor,
           },
         }
       );
@@ -943,7 +973,7 @@ app.post("/api/mobilemenu", async (req, res) => {
         pageBgColor,
         pageFontSize,
         buttonFontColor,
-        loginPageBgColor
+        loginPageBgColor,
       });
     } else {
       // Insert new
@@ -954,7 +984,7 @@ app.post("/api/mobilemenu", async (req, res) => {
         pageBgColor,
         pageFontSize,
         buttonFontColor,
-        loginPageBgColor
+        loginPageBgColor,
       });
       res.json({
         _id: result.insertedId,
@@ -964,7 +994,7 @@ app.post("/api/mobilemenu", async (req, res) => {
         pageBgColor,
         pageFontSize,
         buttonFontColor,
-        loginPageBgColor
+        loginPageBgColor,
       });
     }
   } catch (error) {
@@ -973,13 +1003,14 @@ app.post("/api/mobilemenu", async (req, res) => {
   }
 });
 
-
 // GET Mobile Sidebar Style
 app.get("/api/mobile-sidebar-style", async (req, res) => {
   try {
     const style = await mobileSidebarStyleCollection.findOne({});
     if (!style) {
-      return res.status(404).json({ message: "Mobile sidebar style not found" });
+      return res
+        .status(404)
+        .json({ message: "Mobile sidebar style not found" });
     }
     res.json(style);
   } catch (error) {
@@ -991,8 +1022,13 @@ app.get("/api/mobile-sidebar-style", async (req, res) => {
 // CREATE or UPDATE Mobile Sidebar Style
 app.post("/api/mobile-sidebar-style", async (req, res) => {
   try {
-    const { gradientDirection, gradientFrom, gradientTo, sideTextColor, fontSize } =
-      req.body;
+    const {
+      gradientDirection,
+      gradientFrom,
+      gradientTo,
+      sideTextColor,
+      fontSize,
+    } = req.body;
 
     const existing = await mobileSidebarStyleCollection.findOne({});
 
@@ -1043,7 +1079,6 @@ app.post("/api/mobile-sidebar-style", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
 
 // GET Footer Settings
 app.get("/api/footer", async (req, res) => {
@@ -1099,7 +1134,8 @@ app.post("/api/footer", async (req, res) => {
 app.get("/api/sidebar-menu", async (req, res) => {
   try {
     const menu = await mobileSidebarMenuCollection.findOne({});
-    if (!menu) return res.status(404).json({ message: "Sidebar menu not found" });
+    if (!menu)
+      return res.status(404).json({ message: "Sidebar menu not found" });
     res.json(menu);
   } catch (error) {
     console.error(error);
@@ -1121,7 +1157,9 @@ app.post("/api/sidebar-menu", async (req, res) => {
       );
       res.json({ ...existing, sidebarMenu });
     } else {
-      const result = await mobileSidebarMenuCollection.insertOne({ sidebarMenu });
+      const result = await mobileSidebarMenuCollection.insertOne({
+        sidebarMenu,
+      });
       res.json({ _id: result.insertedId, sidebarMenu });
     }
   } catch (error) {
@@ -1139,7 +1177,10 @@ app.get("/api/admin/balance", async (req, res) => {
       return res.status(400).json({ message: "Role and id required" });
     }
 
-    const admin = await adminsCollection.findOne({ role, _id: new ObjectId(id) });
+    const admin = await adminsCollection.findOne({
+      role,
+      _id: new ObjectId(id),
+    });
 
     if (!admin) {
       return res.status(404).json({ message: `${role} not found` });
@@ -1164,7 +1205,9 @@ app.put("/api/mother-admin/balance", async (req, res) => {
     const value = parseFloat(amount);
 
     if (role !== "Mother Admin") {
-      return res.status(403).json({ message: "Only Mother Admin can add balance" });
+      return res
+        .status(403)
+        .json({ message: "Only Mother Admin can add balance" });
     }
 
     if (isNaN(value) || value <= 0) {
@@ -1191,10 +1234,9 @@ app.put("/api/mother-admin/balance", async (req, res) => {
   }
 });
 
-
 // Update Admin Profile
 app.put("/api/profile/:id", async (req, res) => {
-    try {
+  try {
     const id = req.params.id;
     const updateData = { ...req.body };
 
@@ -1209,21 +1251,20 @@ app.put("/api/profile/:id", async (req, res) => {
     );
 
     if (result.modifiedCount === 0) {
-      return res.status(400).json({ error: 'No changes applied' });
+      return res.status(400).json({ error: "No changes applied" });
     }
 
-    res.json({ success: true, message: 'Admin updated successfully' });
+    res.json({ success: true, message: "Admin updated successfully" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-
 // API endpoint to fetch users with role "User"
-app.get('/api/users', async (req, res) => {
+app.get("/api/users", async (req, res) => {
   try {
-    const { search = '', page = 1, limit = 15 } = req.query;
+    const { search = "", page = 1, limit = 15 } = req.query;
 
     // Build the query: filter by role "User" and search across username, fullname, email
     const query = {
@@ -1232,9 +1273,9 @@ app.get('/api/users', async (req, res) => {
 
     if (search) {
       query.$or = [
-        { username: { $regex: search, $options: 'i' } },
-        { fullname: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
+        { username: { $regex: search, $options: "i" } },
+        { fullname: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -1251,14 +1292,14 @@ app.get('/api/users', async (req, res) => {
 
     res.json({ users: filteredUsers, total });
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-app.get('/api/sub-agents', async (req, res) => {
+app.get("/api/sub-agents", async (req, res) => {
   try {
-    const { search = '', page = 1, limit = 15 } = req.query;
+    const { search = "", page = 1, limit = 15 } = req.query;
 
     // Build the query: filter by role "User" and search across username, fullname, email
     const query = {
@@ -1267,9 +1308,9 @@ app.get('/api/sub-agents', async (req, res) => {
 
     if (search) {
       query.$or = [
-        { username: { $regex: search, $options: 'i' } },
-        { fullname: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
+        { username: { $regex: search, $options: "i" } },
+        { fullname: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -1286,13 +1327,14 @@ app.get('/api/sub-agents', async (req, res) => {
 
     res.json({ users: filteredUsers, total });
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
-app.get('/api/sub-admins', async (req, res) => {
+
+app.get("/api/sub-admins", async (req, res) => {
   try {
-    const { search = '', page = 1, limit = 15 } = req.query;
+    const { search = "", page = 1, limit = 15 } = req.query;
 
     // Build the query: filter by role "User" and search across username, fullname, email
     const query = {
@@ -1301,9 +1343,9 @@ app.get('/api/sub-admins', async (req, res) => {
 
     if (search) {
       query.$or = [
-        { username: { $regex: search, $options: 'i' } },
-        { fullname: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
+        { username: { $regex: search, $options: "i" } },
+        { fullname: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -1320,13 +1362,14 @@ app.get('/api/sub-admins', async (req, res) => {
 
     res.json({ users: filteredUsers, total });
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
-app.get('/api/agents', async (req, res) => {
+
+app.get("/api/agents", async (req, res) => {
   try {
-    const { search = '', page = 1, limit = 15 } = req.query;
+    const { search = "", page = 1, limit = 15 } = req.query;
 
     // Build the query: filter by role "User" and search across username, fullname, email
     const query = {
@@ -1335,9 +1378,9 @@ app.get('/api/agents', async (req, res) => {
 
     if (search) {
       query.$or = [
-        { username: { $regex: search, $options: 'i' } },
-        { fullname: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
+        { username: { $regex: search, $options: "i" } },
+        { fullname: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -1354,13 +1397,14 @@ app.get('/api/agents', async (req, res) => {
 
     res.json({ users: filteredUsers, total });
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
-app.get('/api/masters', async (req, res) => {
+
+app.get("/api/masters", async (req, res) => {
   try {
-    const { search = '', page = 1, limit = 15 } = req.query;
+    const { search = "", page = 1, limit = 15 } = req.query;
 
     // Build the query: filter by role "User" and search across username, fullname, email
     const query = {
@@ -1369,9 +1413,9 @@ app.get('/api/masters', async (req, res) => {
 
     if (search) {
       query.$or = [
-        { username: { $regex: search, $options: 'i' } },
-        { fullname: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
+        { username: { $regex: search, $options: "i" } },
+        { fullname: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -1388,13 +1432,13 @@ app.get('/api/masters', async (req, res) => {
 
     res.json({ users: filteredUsers, total });
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
-app.get('/api/mother-admins', async (req, res) => {
+app.get("/api/mother-admins", async (req, res) => {
   try {
-    const { search = '', page = 1, limit = 15 } = req.query;
+    const { search = "", page = 1, limit = 15 } = req.query;
 
     // Build the query: filter by role "User" and search across username, fullname, email
     const query = {
@@ -1403,9 +1447,9 @@ app.get('/api/mother-admins', async (req, res) => {
 
     if (search) {
       query.$or = [
-        { username: { $regex: search, $options: 'i' } },
-        { fullname: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
+        { username: { $regex: search, $options: "i" } },
+        { fullname: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -1422,11 +1466,10 @@ app.get('/api/mother-admins', async (req, res) => {
 
     res.json({ users: filteredUsers, total });
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
-
 
 // ========== BACKEND CODE ==========
 
@@ -1451,7 +1494,11 @@ app.get("/all-users", async (req, res) => {
     };
 
     const total = await adminsCollection.countDocuments(filter);
-    const users = await adminsCollection.find(filter).skip(skip).limit(limit).toArray();
+    const users = await adminsCollection
+      .find(filter)
+      .skip(skip)
+      .limit(limit)
+      .toArray();
 
     res.json({ users, total });
   } catch (err) {
@@ -1459,7 +1506,6 @@ app.get("/all-users", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 // Transaction API
 app.post("/transaction", async (req, res) => {
@@ -1471,29 +1517,41 @@ app.post("/transaction", async (req, res) => {
       return res.status(400).json({ message: "Invalid request" });
     }
 
-    const actor = await adminsCollection.findOne({ _id: new ObjectId(actorId) });
-    const targetUser = await adminsCollection.findOne({ _id: new ObjectId(toUserId) });
+    const actor = await adminsCollection.findOne({
+      _id: new ObjectId(actorId),
+    });
+    const targetUser = await adminsCollection.findOne({
+      _id: new ObjectId(toUserId),
+    });
 
-    if (!actor || !targetUser) return res.status(404).json({ message: "Not found" });
+    if (!actor || !targetUser)
+      return res.status(404).json({ message: "Not found" });
 
     // ✅ Role Permission Mapping
     const rolePermissions = {
       "Mother Admin": ["Sub Admin", "Master", "Agent", "Sub Agent", "User"],
       "Sub Admin": ["Master", "Agent", "Sub Agent", "User"],
-      "Master": ["Agent", "Sub Agent", "User"],
-      "Agent": ["Sub Agent", "User"],
+      Master: ["Agent", "Sub Agent", "User"],
+      Agent: ["Sub Agent", "User"],
       "Sub Agent": ["User"],
-      "User": []
+      User: [],
     };
 
     // Check if actor can send to target
-    if (!rolePermissions[actor.role].includes(targetUser.role) && actor.role !== "Mother Admin") {
-      return res.status(403).json({ message: `${actor.role} cannot send money to ${targetUser.role}` });
+    if (
+      !rolePermissions[actor.role].includes(targetUser.role) &&
+      actor.role !== "Mother Admin"
+    ) {
+      return res.status(403).json({
+        message: `${actor.role} cannot send money to ${targetUser.role}`,
+      });
     }
 
     // ✅ Only Mother Admin can "minus"
     if (type === "minus" && actor.role !== "Mother Admin") {
-      return res.status(403).json({ message: "Only Mother Admin can minus money" });
+      return res
+        .status(403)
+        .json({ message: "Only Mother Admin can minus money" });
     }
 
     // ✅ Add Money
@@ -1502,24 +1560,42 @@ app.post("/transaction", async (req, res) => {
         return res.status(400).json({ message: "Not enough balance" });
       }
 
-      await adminsCollection.updateOne({ _id: actor._id }, { $inc: { balance: -amt } });
-      await adminsCollection.updateOne({ _id: targetUser._id }, { $inc: { balance: amt } });
+      await adminsCollection.updateOne(
+        { _id: actor._id },
+        { $inc: { balance: -amt } }
+      );
+      await adminsCollection.updateOne(
+        { _id: targetUser._id },
+        { $inc: { balance: amt } }
+      );
     }
 
     // ✅ Minus Money (only by Mother Admin)
     if (type === "minus" && actor.role === "Mother Admin") {
       if (targetUser.balance < amt) {
-        return res.status(400).json({ message: "User has insufficient balance" });
+        return res
+          .status(400)
+          .json({ message: "User has insufficient balance" });
       }
 
-      await adminsCollection.updateOne({ _id: targetUser._id }, { $inc: { balance: -amt } });
-      await adminsCollection.updateOne({ _id: actor._id }, { $inc: { balance: amt } });
+      await adminsCollection.updateOne(
+        { _id: targetUser._id },
+        { $inc: { balance: -amt } }
+      );
+      await adminsCollection.updateOne(
+        { _id: actor._id },
+        { $inc: { balance: amt } }
+      );
     }
 
     // ✅ Save Transaction History
     await transactions.insertOne({
       from: { id: actor._id, username: actor.username, role: actor.role },
-      to: { id: targetUser._id, username: targetUser.username, role: targetUser.role },
+      to: {
+        id: targetUser._id,
+        username: targetUser.username,
+        role: targetUser.role,
+      },
       amount: amt,
       type,
       createdAt: new Date(),
@@ -1532,18 +1608,20 @@ app.post("/transaction", async (req, res) => {
   }
 });
 
-
 // Get Transaction History
 app.get("/transactions", async (req, res) => {
   try {
-    const history = await transactions.find({}).sort({ createdAt: -1 }).limit(50).toArray();
+    const history = await transactions
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .toArray();
     res.json(history);
   } catch (err) {
     console.error("History fetch error", err);
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 // ✅ Get Total Balance for all role === "User"
 app.get("/api/users/total-balance", async (req, res) => {
@@ -1757,20 +1835,25 @@ app.get("/api/deposit/settings", async (req, res) => {
 });
 
 // ✅ Upload Payment Method Image
-app.post("/api/upload/payment-image", upload.single("image"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No image uploaded!" });
+app.post(
+  "/api/upload/payment-image",
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No image uploaded!" });
+      }
+
+      const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${
+        req.file.filename
+      }`;
+      res.json({ imageUrl }); // frontend-এ এই URL পাঠাবে
+    } catch (error) {
+      console.error("Image upload error:", error);
+      res.status(500).json({ message: "Error uploading image", error });
     }
-
-    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-    res.json({ imageUrl }); // frontend-এ এই URL পাঠাবে
-  } catch (error) {
-    console.error("Image upload error:", error);
-    res.status(500).json({ message: "Error uploading image", error });
   }
-});
-
+);
 
 app.post("/api/deposit/settings", async (req, res) => {
   try {
@@ -1780,17 +1863,20 @@ app.post("/api/deposit/settings", async (req, res) => {
     // Remove _id field
     const { _id, ...cleanData } = data;
 
-    await depositSettingsCollection.updateOne({}, { $set: cleanData }, { upsert: true });
+    await depositSettingsCollection.updateOne(
+      {},
+      { $set: cleanData },
+      { upsert: true }
+    );
 
     res.json({ message: "Deposit settings saved successfully!" });
   } catch (error) {
     console.error("❌ Deposit Settings Save Error:", error);
-    res.status(500).json({ message: "Error saving deposit settings", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error saving deposit settings", error: error.message });
   }
 });
-
-
-
 
 // Get deposit settings
 app.get("/api/deposit-payment/settings", async (req, res) => {
@@ -1805,7 +1891,6 @@ app.get("/api/deposit-payment/settings", async (req, res) => {
     res.status(500).json({ error: "Error fetching deposit settings" });
   }
 });
-
 
 // Get all payment methods
 app.get("/api/deposit/methods", async (req, res) => {
@@ -1841,15 +1926,21 @@ app.get("/api/deposit/method/:id", async (req, res) => {
 app.post("/api/deposit/method", async (req, res) => {
   try {
     const methodData = req.body;
-    const existingMethod = await depositSettingsCollection.findOne({ id: methodData.id });
+    const existingMethod = await depositSettingsCollection.findOne({
+      id: methodData.id,
+    });
     if (existingMethod) {
-      return res.status(400).json({ error: "Payment method ID already exists" });
+      return res
+        .status(400)
+        .json({ error: "Payment method ID already exists" });
     }
     const result = await depositSettingsCollection.insertOne({
       ...methodData,
       createdAt: new Date(),
     });
-    res.status(201).json({ message: "Payment method created", id: result.insertedId });
+    res
+      .status(201)
+      .json({ message: "Payment method created", id: result.insertedId });
   } catch (err) {
     console.error("Error creating payment method:", err);
     res.status(500).json({ error: "Error creating payment method" });
@@ -1872,14 +1963,18 @@ app.put("/api/deposit/method/:id", async (req, res) => {
     res.json({ message: "Payment method updated" });
   } catch (err) {
     console.error("Error updating payment method:", err);
-    res.status(500).json({ error: "Error updating payment method", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Error updating payment method", details: err.message });
   }
 });
 
 // Delete payment method
 app.delete("/api/deposit/method/:id", async (req, res) => {
   try {
-    const result = await depositSettingsCollection.deleteOne({ id: req.params.id });
+    const result = await depositSettingsCollection.deleteOne({
+      id: req.params.id,
+    });
     if (result.deletedCount === 0) {
       return res.status(404).json({ error: "Payment method not found" });
     }
@@ -1891,36 +1986,54 @@ app.delete("/api/deposit/method/:id", async (req, res) => {
 });
 
 // Upload deposit logo
-app.post("/api/deposit/upload-logo", upload.single("logo"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No image uploaded" });
+app.post(
+  "/api/deposit/upload-logo",
+  upload.single("logo"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No image uploaded" });
+      }
+      const logoUrl = `${req.protocol}://${req.get("host")}/uploads/${
+        req.file.filename
+      }`;
+      res.json({ logoUrl });
+    } catch (err) {
+      console.error("Image upload error:", err);
+      res.status(500).json({ error: "Error uploading image" });
     }
-    const logoUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-    res.json({ logoUrl });
-  } catch (err) {
-    console.error("Image upload error:", err);
-    res.status(500).json({ error: "Error uploading image" });
   }
-});
+);
 
 // নতুন রুটস অ্যাড করুন run() ফাংশনের পরে
 
 // Settings API
-app.get('/api/deposit-payment/settings', async (req, res) => {
+app.get("/api/deposit-payment/settings", async (req, res) => {
   try {
     const settings = await depositSettingsCollection.findOne(); // Assuming one document
     if (!settings.promotions) settings.promotions = [];
     res.json(settings);
   } catch (err) {
-    res.status(500).json({ error: 'Error fetching settings' });
+    res.status(500).json({ error: "Error fetching settings" });
   }
 });
 
 // Submit Deposit (NaN চেক অ্যাড করা)
-app.post('/api/deposit/submit', async (req, res) => {
+app.post("/api/deposit/submit", async (req, res) => {
   try {
-    const { userId, transactionId, number, paymentMethod, paymentType, amount, currency, promotion, pbuAmount, bonusPBU, totalPBU } = req.body;
+    const {
+      userId,
+      transactionId,
+      number,
+      paymentMethod,
+      paymentType,
+      amount,
+      currency,
+      promotion,
+      pbuAmount,
+      bonusPBU,
+      totalPBU,
+    } = req.body;
 
     // Parse এবং NaN চেক
     const parsedAmount = parseFloat(amount);
@@ -1928,8 +2041,15 @@ app.post('/api/deposit/submit', async (req, res) => {
     const parsedBonusPBU = parseFloat(bonusPBU);
     const parsedTotalPBU = parseFloat(totalPBU);
 
-    if (isNaN(parsedAmount) || isNaN(parsedPbuAmount) || isNaN(parsedBonusPBU) || isNaN(parsedTotalPBU)) {
-      return res.status(400).json({ error: 'Invalid amount or calculation. Please check values.' });
+    if (
+      isNaN(parsedAmount) ||
+      isNaN(parsedPbuAmount) ||
+      isNaN(parsedBonusPBU) ||
+      isNaN(parsedTotalPBU)
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Invalid amount or calculation. Please check values." });
     }
 
     const result = await depositTransactionsCollection.insertOne({
@@ -1944,25 +2064,29 @@ app.post('/api/deposit/submit', async (req, res) => {
       pbuAmount: parsedPbuAmount,
       bonusPBU: parsedBonusPBU,
       totalPBU: parsedTotalPBU,
-      status: 'pending',
+      status: "pending",
       submittedAt: new Date(),
       processedAt: null,
       processedBy: null,
     });
-    res.status(201).json({ message: 'Deposit submitted', id: result.insertedId });
+    res
+      .status(201)
+      .json({ message: "Deposit submitted", id: result.insertedId });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-
 // Confirm Deposit
-app.post('/api/deposit/confirm/:id', async (req, res) => {
+app.post("/api/deposit/confirm/:id", async (req, res) => {
   try {
     const txId = req.params.id;
-    const tx = await depositTransactionsCollection.findOne({ _id: new ObjectId(txId) });
-    if (!tx || tx.status !== 'pending') return res.status(400).json({ error: 'Invalid transaction' });
+    const tx = await depositTransactionsCollection.findOne({
+      _id: new ObjectId(txId),
+    });
+    if (!tx || tx.status !== "pending")
+      return res.status(400).json({ error: "Invalid transaction" });
 
     // Update user balance
     await adminsCollection.updateOne(
@@ -1973,111 +2097,611 @@ app.post('/api/deposit/confirm/:id', async (req, res) => {
     // Update transaction
     await depositTransactionsCollection.updateOne(
       { _id: new ObjectId(txId) },
-      { $set: { status: 'success', processedAt: new Date() } } // processedBy অ্যাড করতে চাইলে অ্যাডমিন আইডি পাস করুন
+      { $set: { status: "success", processedAt: new Date() } } // processedBy অ্যাড করতে চাইলে অ্যাডমিন আইডি পাস করুন
     );
 
-    res.json({ message: 'Confirmed' });
+    res.json({ message: "Confirmed" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-
 // Get User Transactions
-app.get('/api/deposit/transactions', async (req, res) => {
+app.get("/api/deposit/transactions", async (req, res) => {
   try {
     const { userId } = req.query;
-    const transactions = await depositTransactionsCollection.find({ userId: new ObjectId(userId) }).toArray();
+    const transactions = await depositTransactionsCollection
+      .find({ userId: new ObjectId(userId) })
+      .toArray();
     res.json(transactions);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 // Get Pending Transactions (for admin) - with user info
-app.get('/api/deposit/pending', async (req, res) => {
+app.get("/api/deposit/pending", async (req, res) => {
   try {
-    const pending = await depositTransactionsCollection.aggregate([
-      { $match: { status: 'pending' } },
-      {
-        $lookup: {
-          from: 'admin-collection', // users are in adminsCollection? Wait, your user data is in adminsCollection, but role: "User"
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user'
-        }
-      },
-      { $unwind: '$user' }
-    ]).toArray();
+    const pending = await depositTransactionsCollection
+      .aggregate([
+        { $match: { status: "pending" } },
+        {
+          $lookup: {
+            from: "admin-collection", // users are in adminsCollection? Wait, your user data is in adminsCollection, but role: "User"
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+      ])
+      .toArray();
     res.json(pending);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-
 // Cancel Deposit
-app.post('/api/deposit/cancel/:id', async (req, res) => {
+app.post("/api/deposit/cancel/:id", async (req, res) => {
   try {
     const txId = req.params.id;
-    const tx = await depositTransactionsCollection.findOne({ _id: new ObjectId(txId) });
-    if (!tx || tx.status !== 'pending') return res.status(400).json({ error: 'Invalid transaction' });
+    const tx = await depositTransactionsCollection.findOne({
+      _id: new ObjectId(txId),
+    });
+    if (!tx || tx.status !== "pending")
+      return res.status(400).json({ error: "Invalid transaction" });
 
     // No balance update, just status
     await depositTransactionsCollection.updateOne(
       { _id: new ObjectId(txId) },
-      { $set: { status: 'failed', processedAt: new Date() } }
+      { $set: { status: "failed", processedAt: new Date() } }
     );
 
-    res.json({ message: 'Cancelled' });
+    res.json({ message: "Cancelled" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 // Get Full Deposit Transaction History (for admin) with search, pagination
-app.get('/api/deposit/history', async (req, res) => {
+app.get("/api/deposit/history", async (req, res) => {
   try {
-    const { search = '', page = 1, limit = 10 } = req.query;
+    const { search = "", page = 1, limit = 10 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     // Build query
     const query = {};
     if (search) {
-      query.transactionId = { $regex: search, $options: 'i' }; // Case-insensitive search by transactionId
+      query.transactionId = { $regex: search, $options: "i" }; // Case-insensitive search by transactionId
     }
 
     // Get total count
     const total = await depositTransactionsCollection.countDocuments(query);
 
     // Aggregate to join user info
-    const transactions = await depositTransactionsCollection.aggregate([
-      { $match: query },
-      {
-        $lookup: {
-          from: 'admin-collection', // Assuming users are in adminsCollection with role: "User"
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user'
-        }
-      },
-      { $unwind: '$user' },
-      { $skip: skip },
-      { $limit: parseInt(limit) }
-    ]).toArray();
+    const transactions = await depositTransactionsCollection
+      .aggregate([
+        { $match: query },
+        {
+          $lookup: {
+            from: "admin-collection", // Assuming users are in adminsCollection with role: "User"
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+        { $skip: skip },
+        { $limit: parseInt(limit) },
+      ])
+      .toArray();
 
-    res.json({ transactions, total, page: parseInt(page), limit: parseInt(limit) });
+    res.json({
+      transactions,
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
+// GET: All Categories
+app.get("/api/categories", async (req, res) => {
+  try {
+    const categories = await gameCategoriesCollection.find({}).toArray();
+    res.json({ success: true, data: categories });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch categories" });
+  }
+});
 
+// POST: Create Category
+app.post(
+  "/api/categories",
+  uploadSlider.fields([
+    { name: "mainImage", maxCount: 1 },
+    { name: "iconImage", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const { categoryName, providerId, providerName } = req.body;
+
+      if (
+        !categoryName ||
+        !providerId ||
+        !req.files?.mainImage ||
+        !req.files?.iconImage
+      ) {
+        return res
+          .status(400)
+          .json({ success: false, message: "All fields are required" });
+      }
+
+      const mainImage = req.files.mainImage[0].filename;
+      const iconImage = req.files.iconImage[0].filename;
+
+      const newCategory = {
+        categoryName,
+        providerId,
+        providerName,
+        mainImage: `/uploads/${mainImage}`,
+        iconImage: `/uploads/${iconImage}`,
+        createdAt: new Date(),
+      };
+
+      const result = await gameCategoriesCollection.insertOne(newCategory);
+      res.status(201).json({
+        success: true,
+        data: { _id: result.insertedId, ...newCategory },
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+);
+
+// PUT: Update Category
+app.put(
+  "/api/categories/:id",
+  uploadSlider.fields([
+    { name: "mainImage", maxCount: 1 },
+    { name: "iconImage", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { categoryName, providerId, providerName } = req.body;
+
+      const updateData = {
+        categoryName,
+        providerId,
+        providerName,
+        updatedAt: new Date(),
+      };
+
+      if (req.files?.mainImage?.[0]) {
+        updateData.mainImage = `/uploads/${req.files.mainImage[0].filename}`;
+      }
+      if (req.files?.iconImage?.[0]) {
+        updateData.iconImage = `/uploads/${req.files.iconImage[0].filename}`;
+      }
+
+      const result = await gameCategoriesCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updateData }
+      );
+
+      if (result.matchedCount === 0) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Category not found" });
+      }
+
+      res.json({ success: true, message: "Updated successfully" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, message: "Update failed" });
+    }
+  }
+);
+
+// DELETE: Delete Category + Images
+app.delete("/api/categories/:id", async (req, res) => {
+  try {
+    const category = await gameCategoriesCollection.findOne({
+      _id: new ObjectId(req.params.id),
+    });
+    if (!category)
+      return res.status(404).json({ success: false, message: "Not found" });
+
+    // Delete images from server
+    if (category.mainImage) {
+      const mainPath = path.join(__dirname, category.mainImage);
+      if (fs.existsSync(mainPath)) fs.unlinkSync(mainPath);
+    }
+    if (category.iconImage) {
+      const iconPath = path.join(__dirname, category.iconImage);
+      if (fs.existsSync(iconPath)) fs.unlinkSync(iconPath);
+    }
+
+    await gameCategoriesCollection.deleteOne({
+      _id: new ObjectId(req.params.id),
+    });
+    res.json({ success: true, message: "Deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Delete failed" });
+  }
+});
+
+// GET Selected Games
+app.get("/api/selected-games", async (req, res) => {
+  try {
+    const games = await selectedGamesCollection.find({}).toArray();
+    res.json({ success: true, data: games });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch selected games" });
+  }
+});
+
+// POST Select Game with Image and rowSpan
+app.post(
+  "/api/selected-games",
+  uploadSlider.single("image"),
+  async (req, res) => {
+    try {
+      const { gameId, gameUuid, rowSpan } = req.body;
+      const image = req.file ? `/uploads/${req.file.filename}` : null;
+
+      if (!gameId || !gameUuid) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const newSelected = {
+        gameId,
+        gameUuid,
+        image,
+        rowSpan: parseInt(rowSpan) || 1,
+        createdAt: new Date(),
+      };
+
+      const result = await selectedGamesCollection.insertOne(newSelected);
+      res.status(201).json({
+        success: true,
+        data: { _id: result.insertedId, ...newSelected },
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to add game" });
+    }
+  }
+);
+
+// PUT Update Selected Game (image, rowSpan)
+app.put(
+  "/api/selected-games/:id",
+  uploadSlider.single("image"),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { rowSpan } = req.body;
+      const updateData = {
+        rowSpan: parseInt(rowSpan) || 1,
+        updatedAt: new Date(),
+      };
+
+      if (req.file) {
+        updateData.image = `/uploads/${req.file.filename}`;
+      }
+
+      const result = await selectedGamesCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updateData }
+      );
+
+      if (result.matchedCount === 0) {
+        return res.status(404).json({ message: "Selected game not found" });
+      }
+
+      const updated = await selectedGamesCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      res.json({ success: true, data: updated });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to update" });
+    }
+  }
+);
+
+// DELETE Selected Game
+app.delete("/api/selected-games/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const game = await selectedGamesCollection.findOne({
+      _id: new ObjectId(id),
+    });
+
+    if (game.image) {
+      const imagePath = path.join(__dirname, game.image);
+      if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+    }
+
+    await selectedGamesCollection.deleteOne({ _id: new ObjectId(id) });
+    res.json({ success: true, message: "Game removed" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete" });
+  }
+});
+
+app.put("/api/change-password/user", async (req, res) => {
+  try {
+    const { userId, currentPassword, newPassword } = req.body;
+
+    if (!userId || !currentPassword || !newPassword) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const user = await adminsCollection.findOne({ _id: new ObjectId(userId) });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.password !== currentPassword) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    await adminsCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { password: newPassword } }
+    );
+
+    res.json({ success: true, message: "Password changed successfully!" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// POST /api/callback
+app.post("/api/callback", async (req, res) => {
+  try {
+    const {
+      account_id,
+      username: rawUsername,
+      provider_code,
+      amount,
+      game_code,
+      verification_key,
+      bet_type,
+      transaction_id,
+      times,
+    } = req.body;
+
+    console.log("Callback received:", req.body);
+
+    // Required fields
+    if (!rawUsername || !provider_code || amount === undefined || !bet_type || !transaction_id) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    // Clean username (user45 → user)
+    const cleanUsername = rawUsername.replace(/[0-9]+$/, "").trim();
+    if (!cleanUsername) {
+      return res.status(400).json({ success: false, message: "Invalid username format" });
+    }
+
+    // Find user
+    const player = await adminsCollection.findOne({ username: cleanUsername });
+    if (!player) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+        searched: cleanUsername,
+        original: rawUsername,
+      });
+    }
+
+   
+
+    const amountFloat = parseFloat(amount);
+    if (isNaN(amountFloat) || amountFloat < 0) {
+      return res.status(400).json({ success: false, message: "Invalid amount" });
+    }
+
+    // Balance change logic
+    let balanceChange = 0;
+    let status = "lost";
+
+    if (bet_type === "BET") {
+      balanceChange = -amountFloat;           // হারলে টাকা কাটা
+    } else if (bet_type === "SETTLE") {
+      balanceChange = amountFloat;            // জিতলে টাকা যোগ
+      status = "won";
+    } else if (bet_type === "CANCEL" || bet_type === "REFUND") {
+      balanceChange = amountFloat;            // বাতিল হলে ফেরত
+      status = "refunded";
+    }
+
+    const newBalance = Number((player.balance || 0) + balanceChange).toFixed(2);
+
+    // Game record
+    const gameRecord = {
+      provider_code: provider_code.toUpperCase(),
+      game_code,
+      bet_type,
+      amount: amountFloat,
+      transaction_id,
+      verification_key: verification_key || null,
+      times: times || null,
+      status,
+      createdAt: new Date(),
+    };
+
+    // Update user: balance + push gameHistory
+    const result = await adminsCollection.updateOne(
+      { _id: player._id },
+      {
+        $set: { balance: parseFloat(newBalance) },
+        $push: { gameHistory: gameRecord },
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(500).json({ success: false, message: "Failed to update balance/history" });
+    }
+
+    // Success response
+    res.json({
+      success: true,
+      message: "Callback processed successfully",
+      data: {
+        username: player.username,
+        previous_balance: player.balance || 0,
+        change: balanceChange,
+        new_balance: parseFloat(newBalance),
+        transaction_id,
+        status,
+      },
+    });
+
+  } catch (err) {
+    console.error("Callback error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
+});
+
+// POST /api/playgame
+app.post("/playgame", async (req, res) => {
+  try {
+    const { gameID, username: rawUsername, money } = req.body;
+
+    if (!gameID || !rawUsername || money === undefined) {
+      return res
+        .status(400)
+        .json({ success: false, message: "gameID, username, money required" });
+    }
+
+    const cleanUsername = rawUsername.replace(/[0-9]+$/, "").trim();
+    if (!cleanUsername)
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid username" });
+
+    const player = await adminsCollection.findOne({ username: cleanUsername });
+    if (!player)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+
+    const moneyFloat = parseFloat(money);
+    if (isNaN(moneyFloat) || moneyFloat <= 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid amount" });
+    }
+
+    if ((player.balance || 0) < moneyFloat) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Insufficient balance" });
+    }
+
+    // Oracle API থেকে game_uuid নাও
+    const oracleRes = await axios.get(
+      `https://apigames.oracleapi.net/api/games/${gameID}`,
+      {
+        headers: {
+          "x-api-key":
+            "b4fb7adb955b1078d8d38b54f5ad7be8ded17cfba85c37e4faa729ddd679d379",
+        },
+        timeout: 10000,
+      }
+    );
+
+    const gameData = oracleRes.data.data;
+    if (!gameData || !gameData.game_uuid) {
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "Game not found or missing game_uuid",
+        });
+    }
+
+    // CrazyBet99 API কল
+    const postData = {
+      home_url: "https://cp666.live",
+      token: "e9a26dd9196e51bb18a44016a9ca1d73",
+      username: cleanUsername + "45", // তোমার সিস্টেম অনুযায়ী
+      money: moneyFloat,
+      gameUid: gameData.game_uuid,
+    };
+
+    const response = await axios.post(
+      "https://crazybet99.com/getgameurl",
+      qs.stringify(postData),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "x-dstgame-key": postData.token,
+        },
+        timeout: 15000,
+      }
+    );
+
+    const gameUrl =
+      response.data.url || response.data.game_url || response.data;
+    if (!gameUrl) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to get game URL" });
+    }
+
+    // Balance কমিয়ে দাও (BET এর মতো)
+    const newBalance = Number((player.balance || 0) - moneyFloat).toFixed(2);
+
+    await adminsCollection.updateOne(
+      { _id: player._id },
+      { $set: { balance: parseFloat(newBalance) } }
+    );
+
+    // Optional: BET রেকর্ড সেভ করো (transaction_id দরকার হলে)
+    await gameHistoryCollection.insertOne({
+      username: player.username,
+      provider_code: gameData.provider?.code || "UNKNOWN",
+      game_code: gameData.game_code || gameID,
+      bet_type: "BET",
+      amount: moneyFloat,
+      transaction_id: `manual_${Date.now()}_${player._id}`,
+      status: "lost", // পরে SETTLE আসলে আপডেট হবে
+      createdAt: new Date(),
+    });
+
+    res.json({
+      success: true,
+      gameUrl,
+      gameName: gameData.name || "Unknown Game",
+      provider: gameData.provider?.name || "Unknown",
+      deducted: moneyFloat,
+      new_balance: parseFloat(newBalance),
+    });
+  } catch (err) {
+    console.error("PlayGame error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to launch game" });
+  }
+});
 
 // ================= START SERVER =================
 app.listen(port, () => {

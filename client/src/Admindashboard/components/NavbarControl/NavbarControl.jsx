@@ -11,7 +11,7 @@ const NavbarControl = () => {
   const [signUpButtonBgColor,setSignUpButtonColor] = useState("#ffffff")
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/navbar")
+      .get(`${import.meta.env.VITE_API_URL}/api/navbar`)
       .then((res) => {
         const data = res.data;
         setBgColor(data.bgColor || "#ffffff");
@@ -28,7 +28,7 @@ const NavbarControl = () => {
     if (!isEditing) return;
 
     try {
-      await axios.post("http://localhost:5000/api/navbar", {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/navbar`, {
         bgColor,
         textColor,
         bgButtonColor, // ✅ backend এর সাথে match করলাম

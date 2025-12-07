@@ -12,7 +12,7 @@ const MobileSideBarControl = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/mobile-sidebar-style")
+      .get(`${import.meta.env.VITE_API_URL}/api/mobile-sidebar-style`)
       .then((res) => {
         const data = res.data;
         setGradientDirection(data.gradientDirection || "to-r");
@@ -29,7 +29,7 @@ const MobileSideBarControl = () => {
     if (!isEditing) return;
 
     try {
-      await axios.post("http://localhost:5000/api/mobile-sidebar-style", {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/mobile-sidebar-style`, {
         gradientDirection,
         gradientFrom,
         gradientTo,

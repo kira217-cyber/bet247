@@ -9,7 +9,7 @@ const FooterControl = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/footer")
+      .get(`${import.meta.env.VITE_API_URL}/api/footer`)
       .then((res) => {
         const data = res.data;
         setFooterTextColor(data.footerTextColor || "#ffffff");
@@ -23,7 +23,7 @@ const FooterControl = () => {
     if (!isEditing) return;
 
     try {
-      await axios.post("http://localhost:5000/api/footer", {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/footer`, {
         footerTextColor,
         footerFontSize: Number(footerFontSize),
       });

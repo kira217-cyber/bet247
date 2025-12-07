@@ -35,7 +35,7 @@ const SignUpControl = () => {
     formData.append("signupImage", file);
 
     try {
-      await axios.post("http://localhost:5000/api/signup-image", formData, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/signup-image`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -50,7 +50,7 @@ const SignUpControl = () => {
   // Delete Image
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/signup-image/${signupId}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/signup-image/${signupId}`);
       fetchSignupImage();
       setIsDeleteModalOpen(false);
       toast.error("Signup image deleted!");

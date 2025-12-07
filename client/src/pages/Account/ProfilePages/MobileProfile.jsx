@@ -5,7 +5,7 @@ import { FaWhatsapp, FaExclamationTriangle } from "react-icons/fa";
 import { AuthContext } from "../../../context/AuthContext";
 
 const MobileProfile = () => {
-  const {userBalance,currency,login} = useContext(AuthContext);
+  const { userBalance, currency, loginUser } = useContext(AuthContext);
   return (
     <>
       <div className="md:hidden  bg-gray-900 text-white flex flex-col mt-12">
@@ -23,7 +23,9 @@ const MobileProfile = () => {
             <div className="w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500"></div>
           </div>
         </div>
-        <div className="text-center mt-10 text-gray-300">rai7</div>
+        <div className="text-center mt-10 text-gray-300">
+          {loginUser?.username}
+        </div>
 
         {/* Info Card */}
         <div className="bg-[#1f1f1f] mx-3 mt-4 p-4 rounded-xl mb-8">
@@ -59,48 +61,55 @@ const MobileProfile = () => {
       </div>
       <div className="pb-14 bg-gray-900 px-2 ">
         <div className="bg-[#1f1f1f] text-gray-200 rounded-xl w-full  mx-auto px-2 py-6 md:hidden">
-        {/* Full Name + Date */}
-        <div className="flex justify-between items-center border-b border-gray-700 pb-2">
-          <div>
-            <p className="text-sm font-semibold">Full Name</p>
-            <p className="text-orange-400 text-sm">rai7</p>
-          </div>
-          <p className="text-xs text-gray-400">Date Registered : 2025-09-08</p>
-        </div>
-
-        {/* WhatsApp Number */}
-        <div className="flex justify-between items-center mt-4 border-b border-gray-700 pb-2">
-          <p className="text-sm">WhatsApp Number</p>
-          <button className="bg-yellow-500 text-black px-2 py-1 rounded text-xs flex items-center gap-1">
-            <FaWhatsapp /> Update
-          </button>
-        </div>
-        <p className="text-gray-400 text-sm mt-1">------</p>
-
-        {/* Email */}
-        <div className="mt-4 border-b border-gray-700 pb-2">
-          <p className="text-sm">Email</p>
-          <div className="flex justify-between items-center">
-            <p className="text-white text-sm break-all">
-              freelancerraihan524@gmail.com
+          {/* Full Name + Date */}
+          <div className="flex justify-between items-center border-b border-gray-700 pb-2">
+            <div>
+              <p className="text-sm font-semibold">Full Name</p>
+              <p className="text-orange-400 text-sm">{loginUser?.fullname}</p>
+            </div>
+            <p className="text-xs text-gray-400">
+              Date Registered :{" "}
+              {new Date(loginUser?.joinedAt).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
             </p>
-            <span className="flex items-center gap-1 text-yellow-500 text-xs">
-              <FaExclamationTriangle /> Not Verified
-            </span>
           </div>
-        </div>
 
-        {/* Birthday */}
-        <div className="mt-4">
-          <p className="text-sm">Birthday</p>
-          <div className="flex justify-between items-center">
-            <p className="text-gray-400 text-sm">YYYY/MM/DD</p>
-            <span className="flex items-center gap-1 text-yellow-500 text-xs">
-              <FaExclamationTriangle /> Not Verified
-            </span>
+          {/* WhatsApp Number */}
+          <div className="flex justify-between items-center mt-4 border-b border-gray-700 pb-2">
+            <p className="text-sm">WhatsApp Number</p>
+            <button className="bg-yellow-500 text-black px-2 py-1 rounded text-xs flex items-center gap-1">
+              <FaWhatsapp /> Update
+            </button>
+          </div>
+          <p className="text-gray-400 text-sm mt-1">------</p>
+
+          {/* Email */}
+          <div className="mt-4 border-b border-gray-700 pb-2">
+            <p className="text-sm">Email</p>
+            <div className="flex justify-between items-center">
+              <p className="text-white text-sm break-all">
+                {loginUser?.email || "------"}
+              </p>
+              <span className="flex items-center gap-1 text-yellow-500 text-xs">
+                <FaExclamationTriangle /> Not Verified
+              </span>
+            </div>
+          </div>
+
+          {/* Birthday */}
+          <div className="mt-4">
+            <p className="text-sm">Birthday</p>
+            <div className="flex justify-between items-center">
+              <p className="text-gray-400 text-sm">YYYY/MM/DD</p>
+              <span className="flex items-center gap-1 text-yellow-500 text-xs">
+                <FaExclamationTriangle /> Not Verified
+              </span>
+            </div>
           </div>
         </div>
-      </div>
       </div>
     </>
   );

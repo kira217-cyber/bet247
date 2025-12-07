@@ -66,7 +66,7 @@ const Sidebar = () => {
                 <span>Elite</span>
               </div>
 
-              <div className="mt-4 w-full flex justify-around">
+              {/* <div className="mt-4 w-full flex justify-around">
                 <div>
                   <button className="bg-gray-600 hover:bg-pink-700 p-3 rounded-full hover:cursor-pointer">
                     <NavLink to={"my-wallet"}>
@@ -90,19 +90,19 @@ const Sidebar = () => {
                   <br />
                   <span>Withdraw</span>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Funds */}
-            <div className="mt-6">
+            <div className="mt-44">
               <h3 className="text-sm font-bold  mb-2">Funds</h3>
               <ul className="space-y-2">
                 <NavLink className="flex items-center gap-2 hover:text-white text-gray-300 cursor-pointer">
                   <FaHistory /><Link to={"billing-records"}> Betting Records</Link>
                 </NavLink>
-                <li className="flex items-center gap-2 hover:text-white text-gray-300 cursor-pointer">
+                {/* <li className="flex items-center gap-2 hover:text-white text-gray-300 cursor-pointer">
                     <FaWallet /> <Link to={"my-wallet"}> My Wallet</Link>
-                </li>
+                </li> */}
                 <NavLink className="flex items-center gap-2 hover:text-white text-gray-300 cursor-pointer">
                   <FaSyncAlt /> Turnover
                 </NavLink>

@@ -76,7 +76,7 @@ const logout = () => {
   // backend থেকে logo ফেচ
   const fetchLogo = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/logo");
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/logo`);
 
       // যদি ডাটাবেসে logo থাকে
       if (data && data.logoUrl) {
@@ -99,7 +99,7 @@ const logout = () => {
   // ✅ স্লাইডার ডাটা ফেচ
   const fetchSliders = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/sliders");
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/sliders`);
       setSliders(res.data);
     } catch (err) {
       console.error(err);
@@ -113,7 +113,7 @@ const logout = () => {
   // favicon and title change
   const fetchSettings = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/settings");
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/settings`);
       if (data) {
         setSettings(data);
 
@@ -144,7 +144,7 @@ const logout = () => {
   const fetchSignupImage = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:5000/api/signup-image"
+        `${import.meta.env.VITE_API_URL}/api/signup-image`
       );
       if (data && data.imageUrl) {
         setSignupImage(data.imageUrl);
@@ -162,7 +162,7 @@ const logout = () => {
 
   const fetchLoginImage = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/login-image");
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/login-image`);
       if (data && data.imageUrl) {
         setLoginImage(data.imageUrl);
         setLoginImageId(data._id);
@@ -182,7 +182,7 @@ const logout = () => {
   const fetchAdminLoginImage = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:5000/api/admin-login-image"
+        `${import.meta.env.VITE_API_URL}/api/admin-login-image`
       );
       if (data && data.loginImageUrl) {
         setAdminLoginImage(data.loginImageUrl);
@@ -201,7 +201,7 @@ const logout = () => {
     // Navbar settings fetch
     const fetchNavbar = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/navbar");
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/navbar`);
         setNavbar(res.data);
 
       } catch (error) {
@@ -216,7 +216,7 @@ const logout = () => {
   useEffect(() => {
     const fetchWebMenu = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/webmenu");
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/webmenu`);
         setWebMenu(res.data);
 
       } catch (error) {
@@ -232,7 +232,7 @@ const logout = () => {
   useEffect(() => {
     const fetchMobileMenu = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/mobilemenu");
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/mobilemenu`);
         setMobileMenu(res.data);
 
       } catch (error) {
@@ -247,7 +247,7 @@ const logout = () => {
     const fetchMobileMenu = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/mobile-sidebar-style"
+          `${import.meta.env.VITE_API_URL}/api/mobile-sidebar-style`
         );
         setMobileMenuSidebar(res.data);
 
@@ -262,7 +262,7 @@ const logout = () => {
   useEffect(() => {
     const fetchFooter = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/footer");
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/footer`);
         setFooter(res.data);
 
       } catch (error) {
@@ -279,7 +279,7 @@ const logout = () => {
   useEffect(() => {
     const fetchUrl = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/sidebar-menu");
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/sidebar-menu`);
         setSidebarData(res.data.sidebarMenu);
       } catch (error) {
         console.error("Navbar API error:", error);

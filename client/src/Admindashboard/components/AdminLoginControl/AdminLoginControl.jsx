@@ -16,7 +16,7 @@ const AdminLoginControl = () => {
   // Fetch Login Image
   const fetchLoginImage = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/admin-login-image");
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin-login-image`);
       if (data && data.loginImageUrl) {
         setLoginImage(data.loginImageUrl);
         setId(data._id);
@@ -45,7 +45,7 @@ const AdminLoginControl = () => {
     formData.append("loginImage", file);
 
     try {
-      await axios.post("http://localhost:5000/api/admin-login-image", formData, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/admin-login-image`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -63,7 +63,7 @@ const AdminLoginControl = () => {
   // Delete
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/admin-login-image/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin-login-image/${id}`);
       toast.error("Login Image Deleted!");
       setIsDeleteModalOpen(false);
       setLoginImage(null);

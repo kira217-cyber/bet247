@@ -11,7 +11,7 @@ const WebMenuControl = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/webmenu")
+      .get(`${import.meta.env.VITE_API_URL}/api/webmenu`)
       .then((res) => {
         const data = res.data;
         setWebMenuBgColor(data.webMenuBgColor || "#ffffff");
@@ -27,7 +27,7 @@ const WebMenuControl = () => {
     if (!isEditing) return;
 
     try {
-      await axios.post("http://localhost:5000/api/webmenu", {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/webmenu`, {
         webMenuBgColor,
         webMenuTextColor,
         webMenuFontSize: Number(webMenuFontSize),

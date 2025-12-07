@@ -105,7 +105,7 @@ const Login = () => {
               className="flex-1 px-4 py-2 rounded bg-white text-black focus:outline-none"
             />
             <span className="bg-white px-3 py-2 rounded text-black font-bold">
-              3972
+              {Math.floor(1000 + Math.random() * 9000)}
             </span>
           </div>
 

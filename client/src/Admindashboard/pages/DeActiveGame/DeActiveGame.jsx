@@ -2,8 +2,8 @@ import React from 'react';
 
 const DeActiveGame = () => {
     return (
-        <div>
-            DeActive Game
+         <div className='text-center mt-5 text-4xl text-red-400'>
+            No API Inclued!
         </div>
     );
 };

@@ -4,7 +4,7 @@ import MobileProfile from "./MobileProfile";
 import { AuthContext } from "../../../context/AuthContext";
 
 const DekstopMyProfile = () => {
-  const {userBalance,currency} = useContext(AuthContext);
+  const { userBalance, currency, loginUser } = useContext(AuthContext);
   return (
     <>
       {/* Mobile View */}
@@ -51,7 +51,9 @@ const DekstopMyProfile = () => {
             <div className="bg-gray-800 p-4  items-center w-1/2">
               <span>Main Wallet</span>
               <br />
-              <span className="text-green-400 font-bold text-2xl">{currency} {userBalance}</span>
+              <span className="text-green-400 font-bold text-2xl">
+                {currency} {userBalance}
+              </span>
             </div>
             <div className="bg-gray-800 p-4 items-center w-1/2">
               <span>Security Level</span>
@@ -65,7 +67,20 @@ const DekstopMyProfile = () => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm text-gray-400">Last Login Time</p>
-                <p>2025/09/08 20:29:46</p>
+                <p>
+                  {new Date(loginUser?.lastLogin).toLocaleDateString("en-GB", {
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                  {" • "}
+                  {new Date(loginUser?.lastLogin).toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">Last Deposit Time</p>
@@ -77,7 +92,14 @@ const DekstopMyProfile = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-400">Date Registered</p>
-                <p>2025/09/08 19:59:57</p>
+                <p>
+                  {" "}
+                  {new Date(loginUser?.joinedAt).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
               </div>
             </div>
           </div>
@@ -125,7 +147,7 @@ const DekstopMyProfile = () => {
           <div className="rounded-lg flex justify-between items-center gap-4">
             <div className="flex items-center gap-2 bg-gray-800 w-full px-8 py-4 rounded-sm">
               <FaUser />
-              <span>rai7</span>
+              <span>{loginUser?.username}</span>
             </div>
             <div className="flex items-center gap-2 text-gray-400 bg-gray-800 w-full px-8 py-4 rounded-sm">
               <FaPhoneAlt />
@@ -134,7 +156,7 @@ const DekstopMyProfile = () => {
             </div>
             <div className="flex items-center gap-2 bg-gray-800 w-full px-8 py-4 rounded-sm">
               <FaEnvelope />
-              <span>freelancerraihan524@gmail.com</span>
+              <span>{loginUser?.email || "-----------"}</span>
               <span className="text-red-500">✖</span>
             </div>
             <div className="flex items-center gap-2 bg-gray-800 w-full px-8 py-4 rounded-sm">
