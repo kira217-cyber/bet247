@@ -1,90 +1,135 @@
-import React from "react";
-
-const games = [
-  {
-    id: 1,
-    name: "Play8",
-    image: "https://i.ibb.co.com/mCn80gTq/ETFr-DKk6w-G7j-Ib-QAw-Fe4nm8-Pvo6-BUWRPugch-ZYvu.webp",
-  },
-  {
-    id: 2,
-    name: "FastSpin",
-    image: "https://i.ibb.co.com/JjH8GXPK/maxresdefault.jpg",
-  },
-  {
-    id: 3,
-    name: "ILoveU",
-    image: "https://i.ibb.co.com/NnKxWCZC/apps-6458-14353780560698029-ebd0d5e5-940e-4b86-a563-4518bd770f6e.jpg",
-  },
-  {
-    id: 4,
-    name: "AE Sexy",
-    image: "https://i.ibb.co.com/VYDtybRb/betgames-wheelpr.jpg",
-  },
-  {
-    id: 5,
-    name: "Casino",
-    image: "https://i.ibb.co.com/1G3KbhCt/5120.jpg",
-  },
-  {
-    id: 6,
-    name: "Ezugi",
-    image: "https://i.ibb.co.com/S4mHh38t/header-ace-playing-cards.webp",
-  },
-  {
-    id: 7,
-    name: "Evolution",
-    image: "https://i.ibb.co.com/tTN4Myzr/2018-september-first-person-gaming-roulette-7-0.jpg",
-  },
-  {
-    id: 8,
-    name: "Pragmatic",
-    image: "https://i.ibb.co.com/zTsvs4Vj/pngtree-strategies-and-elements-in-poker-gambling-bluffs-betting-chips-luck-and-tactical-gameplay-ph.webp",
-  },
-  {
-    id: 9,
-    name: "Spade",
-    image: "https://i.ibb.co.com/DDymCtcv/images.jpg",
-  },
-  {
-    id: 10,
-    name: "Cricket",
-    image: "https://i.ibb.co.com/5bJV0Ff/Light-Wonder-Games-Blog.png",
-  },
-  {
-    id: 11,
-    name: "Soccer",
-    image: "https://i.ibb.co.com/4RmKfsgb/istockphoto-1627628253-612x612.jpg",
-  },
-  {
-    id: 12,
-    name: "Tennis",
-    image: "https://i.ibb.co.com/4nzgm6RV/shutterstock-2488096013.webp",
-  },
-];
+import React, { useState, useEffect, useContext } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router";
+import { AuthContext } from "../../context/AuthContext";
+import { toast } from "react-toastify";
 
 const AllGames = () => {
+  const [selectedGames, setSelectedGames] = useState([]);
+  const [gameNames, setGameNames] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  const { loginUser } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  useEffect(() => {
+    const fetchSelectedGames = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/selected-games`);
+        const games = res.data.data || [];
+
+        // নতুন গেম আগে আসবে
+        games.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setSelectedGames(games);
+
+        // Oracle API থেকে গেমের নাম নিয়ে আসা
+        const namePromises = games.map(async (game) => {
+          try {
+            const oracleRes = await axios.get(
+              `https://apigames.oracleapi.net/api/games/${game.gameId}`,
+              {
+                headers: {
+                  "x-api-key":
+                    "b4fb7adb955b1078d8d38b54f5ad7be8ded17cfba85c37e4faa729ddd679d379",
+                },
+              }
+            );
+            return {
+              gameId: game.gameId,
+              name: oracleRes.data.data?.name || "Unknown Game",
+            };
+          } catch (err) {
+            return { gameId: game.gameId, name: "Game Not Found" };
+          }
+        });
+
+        const names = await Promise.all(namePromises);
+        const nameMap = {};
+        names.forEach((item) => {
+          nameMap[item.gameId] = item.name;
+        });
+        setGameNames(nameMap);
+      } catch (err) {
+        console.error("Failed to load selected games:", err);
+        toast.error("Failed to load games");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSelectedGames();
+  }, [API_URL]);
+
+  // Play Now ক্লিক হ্যান্ডলার — লগিন চেক করবে
+  const handlePlayClick = (gameId) => {
+    if (!loginUser) {
+      toast.error("Please login to play the game!", {
+        duration: 4000,
+        position: "top-center",
+      });
+      navigate("/login");
+      return;
+    }
+
+    // লগিন থাকলে গেমে নিয়ে যাও
+    navigate(`/play-game/${gameId}`);
+  };
+
+  const getGridSpanClass = (rowSpan) => {
+    const span = Math.min(rowSpan || 1, 4);
+
+    const desktop = {
+      1: "lg:col-span-1",
+      2: "lg:col-span-2",
+      3: "lg:col-span-3",
+      4: "lg:col-span-4",
+    }[span];
+
+    const mobile = span === 1 ? "col-span-1" : "col-span-2";
+
+    return `${mobile} ${desktop}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="p-10 text-center text-gray-400">Loading games...</div>
+    );
+  }
+
   return (
     <div className="p-2 lg:p-10">
-
-      {/* Responsive Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-        {games.map((game) => (
+        {selectedGames.map((game) => (
           <div
-            key={game.id}
-            className="relative rounded-lg overflow-hidden shadow-lg group cursor-pointer"
+            key={game._id}
+            className={`relative rounded-lg overflow-hidden shadow-lg group cursor-pointer ${getGridSpanClass(
+              game.rowSpan
+            )}`}
           >
-            {/* Game Image */}
+            {/* Image এ ক্লিক করলেও একই চেক হবে */}
             <img
-              src={game.image}
-              alt={game.name}
-              className="w-full h-28 md:h-56 lg:h-60 object-cover group-hover:scale-105 transition-transform duration-300"
+              src={`${API_URL}${game.image}`}
+              onClick={() => handlePlayClick(game.gameId)}
+              alt={gameNames[game.gameId] || "Loading..."}
+              className="w-full h-28 md:h-56 lg:h-72 object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={(e) => {
+                e.target.src =
+                  "https://via.placeholder.com/400x300?text=No+Image";
+              }}
             />
 
             {/* Overlay */}
-            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-[2px] flex justify-between items-center">
-              <span className="font-semibold">{game.name}</span>
-              <button className="bg-green-600 px-1 py-1 text-sm rounded-md hover:bg-green-700 transition">
+            <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-[2px] flex justify-between items-center backdrop-blur-sm">
+              <span className="font-semibold text-xs md:text-sm truncate px-2">
+                {gameNames[game.gameId] || "Loading name..."}
+              </span>
+
+              <button
+                onClick={() => handlePlayClick(game.gameId)}
+                className="bg-green-600 hover:bg-green-700 px-2 py-1 md:px-3 md:py-2 text-xs md:text-sm rounded-md transition font-medium"
+              >
                 Play Now
               </button>
             </div>

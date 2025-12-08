@@ -30,7 +30,7 @@ const HeroSection = () => {
   };
 
   return (
-    <div className="relative w-full h-[70px] md:h-[350px] lg:h-[500px] overflow-hidden">
+    <div className="relative w-full h-[120px] md:h-[350px] lg:h-[500px] overflow-hidden">
       {/* Slider Images */}
       {sliders.map((image, index) => (
         <div

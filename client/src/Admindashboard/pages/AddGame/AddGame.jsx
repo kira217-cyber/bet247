@@ -323,6 +323,7 @@ const AddGame = () => {
                           <option value={1}>1 Row</option>
                           <option value={2}>2 Rows</option>
                           <option value={3}>3 Rows</option>
+                          <option value={4}>4 Rows</option>
                         </select>
                       </div>
                     )}
@@ -391,6 +392,7 @@ const AddGame = () => {
                   <option value={1}>1 Row</option>
                   <option value={2}>2 Rows</option>
                   <option value={3}>3 Rows</option>
+                  <option value={4}>4 Rows</option>
                 </select>
               </div>
 

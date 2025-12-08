@@ -94,11 +94,13 @@ import SubAgentPrivateRoute from "../routes/SubAgentPrivateRoute";
 import AddGameCategory from "../Admindashboard/pages/AddGameCategory/AddGameCategory";
 import AddGame from "../Admindashboard/pages/AddGame/AddGame";
 import TransactionHistory from "../Admindashboard/pages/TransactionHistory/TransactionHistory";
+import PlayGame from "../pages/PalyGame/PlayGame";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     Component: RootLayout,
+    errorElement: <Unauthorized />,
     children: [
       {
         index: true,
@@ -265,6 +267,10 @@ export const router = createBrowserRouter([
   {
     path: "my-account",
     Component: MobileAccount,
+  },
+  {
+    path: "/play-game/:gameId",
+    Component: PlayGame,
   },
   {
     path: "admin-login",

@@ -5,6 +5,8 @@ const path = require("path");
 const fs = require("fs");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const multer = require("multer");
+const axios = require("axios");
+const qs = require("qs"); 
 
 const app = express();
 // Serve static files from "uploads" folder
@@ -2582,7 +2584,7 @@ app.post("/api/callback", async (req, res) => {
   }
 });
 
-// POST /api/playgame
+// ✅ Play Game API
 app.post("/playgame", async (req, res) => {
   try {
     const { gameID, username: rawUsername, money } = req.body;
@@ -2595,21 +2597,15 @@ app.post("/playgame", async (req, res) => {
 
     const cleanUsername = rawUsername.replace(/[0-9]+$/, "").trim();
     if (!cleanUsername)
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid username" });
+      return res.status(400).json({ success: false, message: "Invalid username" });
 
     const player = await adminsCollection.findOne({ username: cleanUsername });
     if (!player)
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
 
     const moneyFloat = parseFloat(money);
     if (isNaN(moneyFloat) || moneyFloat <= 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid amount" });
+      return res.status(400).json({ success: false, message: "Invalid amount" });
     }
 
     if ((player.balance || 0) < moneyFloat) {
@@ -2618,13 +2614,12 @@ app.post("/playgame", async (req, res) => {
         .json({ success: false, message: "Insufficient balance" });
     }
 
-    // Oracle API থেকে game_uuid নাও
+    // Oracle API থেকে game_uuid নেওয়া
     const oracleRes = await axios.get(
       `https://apigames.oracleapi.net/api/games/${gameID}`,
       {
         headers: {
-          "x-api-key":
-            "b4fb7adb955b1078d8d38b54f5ad7be8ded17cfba85c37e4faa729ddd679d379",
+          "x-api-key": "b4fb7adb955b1078d8d38b54f5ad7be8ded17cfba85c37e4faa729ddd679d379",
         },
         timeout: 10000,
       }
@@ -2634,24 +2629,22 @@ app.post("/playgame", async (req, res) => {
     if (!gameData || !gameData.game_uuid) {
       return res
         .status(404)
-        .json({
-          success: false,
-          message: "Game not found or missing game_uuid",
-        });
+        .json({ success: false, message: "Game not found or missing game_uuid" });
     }
 
-    // CrazyBet99 API কল
+    // CrazyBet99 API কল করার জন্য ডেটা তৈরি
     const postData = {
       home_url: "https://cp666.live",
       token: "e9a26dd9196e51bb18a44016a9ca1d73",
-      username: cleanUsername + "45", // তোমার সিস্টেম অনুযায়ী
+      username: cleanUsername + "45",
       money: moneyFloat,
       gameUid: gameData.game_uuid,
     };
 
+    // এখানে qs.stringify ব্যবহার করো
     const response = await axios.post(
       "https://crazybet99.com/getgameurl",
-      qs.stringify(postData),
+      qs.stringify(postData), // এটাই ম্যাজিক
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -2661,15 +2654,15 @@ app.post("/playgame", async (req, res) => {
       }
     );
 
-    const gameUrl =
-      response.data.url || response.data.game_url || response.data;
+    const gameUrl = response.data.url || response.data.game_url || response.data;
+
     if (!gameUrl) {
       return res
         .status(500)
-        .json({ success: false, message: "Failed to get game URL" });
+        .json({ success: false, message: "Failed to get game URL from provider" });
     }
 
-    // Balance কমিয়ে দাও (BET এর মতো)
+    // ব্যালেন্স কাটো
     const newBalance = Number((player.balance || 0) - moneyFloat).toFixed(2);
 
     await adminsCollection.updateOne(
@@ -2677,15 +2670,15 @@ app.post("/playgame", async (req, res) => {
       { $set: { balance: parseFloat(newBalance) } }
     );
 
-    // Optional: BET রেকর্ড সেভ করো (transaction_id দরকার হলে)
+    // ঐচ্ছিক: ট্রানজেকশন হিস্ট্রি
     await gameHistoryCollection.insertOne({
       username: player.username,
       provider_code: gameData.provider?.code || "UNKNOWN",
       game_code: gameData.game_code || gameID,
       bet_type: "BET",
       amount: moneyFloat,
-      transaction_id: `manual_${Date.now()}_${player._id}`,
-      status: "lost", // পরে SETTLE আসলে আপডেট হবে
+      transaction_id: `bet_${Date.now()}`,
+      status: "pending",
       createdAt: new Date(),
     });
 
@@ -2698,7 +2691,10 @@ app.post("/playgame", async (req, res) => {
       new_balance: parseFloat(newBalance),
     });
   } catch (err) {
-    console.error("PlayGame error:", err.message);
+    console.error("PlayGame API Error:", err.message);
+    if (err.response) {
+      console.error("Provider Response:", err.response.data);
+    }
     res.status(500).json({ success: false, message: "Failed to launch game" });
   }
 });
