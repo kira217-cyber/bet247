@@ -21,7 +21,8 @@ const AllGames = () => {
         const games = res.data.data || [];
 
         // নতুন গেম আগে আসবে
-        games.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        games.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
         setSelectedGames(games);
 
         // Oracle API থেকে গেমের নাম নিয়ে আসা
@@ -125,12 +126,12 @@ const AllGames = () => {
               <span className="font-semibold text-xs md:text-sm truncate px-2">
                 {gameNames[game.gameId] || "Loading name..."}
               </span>
-
               <button
                 onClick={() => handlePlayClick(game.gameId)}
-                className="bg-green-600 hover:bg-green-700 px-2 py-1 md:px-3 md:py-2 text-xs md:text-sm rounded-md transition font-medium"
+                className="relative overflow-hidden bg-gradient-to-r cursor-pointer from-green-600 to-green-600 hover:from-green-500 hover:to-green-500 text-white font-bold px-4 py-2 md:px-3 md:py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-300 animate-pulse"
               >
-                Play Now
+                <span className="relative z-10">Play Now</span>
+                <span className="absolute inset-0 bg-white opacity-0 hover:opacity-30 transition-opacity duration-300"></span>
               </button>
             </div>
           </div>
