@@ -1,0 +1,18 @@
+Admin Login Pages -------------
+
+http://localhost:5173/admin-login
+http://localhost:5173/sub-admin-login
+http://localhost:5173/master-login
+http://localhost:5173/agent-login
+http://localhost:5173/sub-agent-login
+
+Client .env.local ---------------------
+
+VITE_API_URL=http://localhost:5000
+
+
+Server .env ----------------------
+
+MONGODB_URI=mongodb+srv://oracleUser:KhkaYL4iVGobLqeK@cluster0.to14ojs.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+PORT=5000
+API_URL=http://localhost:5000
