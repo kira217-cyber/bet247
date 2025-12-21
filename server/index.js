@@ -44,6 +44,7 @@ let depositTransactionsCollection;
 let gameCategoriesCollection;
 let selectedGamesCollection;
 let gameHistoryCollection;
+let navbarItemsCollection;
 
 async function run() {
   try {
@@ -70,6 +71,7 @@ async function run() {
     gameCategoriesCollection = db.collection("game_categories");
     selectedGamesCollection = db.collection("selected_games");
     gameHistoryCollection = db.collection("game_history"); // গেম হিস্ট্রি
+    navbarItemsCollection = db.collection("navbar_items");
 
     console.log("✅ MongoDB Connected Successfully!");
   } catch (error) {
@@ -2698,6 +2700,178 @@ app.post("/playgame", async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to launch game" });
   }
 });
+
+// GET: সব navbar items পাওয়া (অর্ডার অনুযায়ী)
+app.get("/api/navbar-items", async (req, res) => {
+  try {
+    const items = await navbarItemsCollection
+      .find({})
+      .sort({ order: 1 }) // অর্ডার অনুযায়ী সর্ট
+      .toArray();
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching navbar items", error });
+  }
+});
+
+// POST: নতুন navbar item যোগ করা
+app.post("/api/navbar-items", async (req, res) => {
+  try {
+    const { name, url, gameId, liveCount } = req.body;
+
+    if (!name || !url) {
+      return res.status(400).json({ error: "Name and URL are required" });
+    }
+
+    // সর্বশেষ অর্ডার নাম্বার নিয়ে +1 করা
+    const lastItem = await navbarItemsCollection
+      .find({})
+      .sort({ order: -1 })
+      .limit(1)
+      .toArray();
+
+    const newOrder = lastItem.length > 0 ? lastItem[0].order + 1 : 1;
+
+    const newItem = {
+      name,
+      url,
+      gameId: gameId || null,
+      liveCount: liveCount || 0,
+      order: newOrder,
+      createdAt: new Date(),
+    };
+
+    const result = await navbarItemsCollection.insertOne(newItem);
+    const insertedItem = await navbarItemsCollection.findOne({ _id: result.insertedId });
+
+    res.status(201).json(insertedItem);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// PUT: navbar item আপডেট করা
+app.put("/api/navbar-items/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, url, gameId, liveCount } = req.body;
+
+    if (!name || !url) {
+      return res.status(400).json({ error: "Name and URL are required" });
+    }
+
+    const result = await navbarItemsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          name,
+          url,
+          gameId: gameId || null,
+          liveCount: liveCount || 0,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: "Item not found" });
+    }
+
+    const updatedItem = await navbarItemsCollection.findOne({ _id: new ObjectId(id) });
+    res.json(updatedItem);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// DELETE: navbar item ডিলিট করা
+app.delete("/api/navbar-items/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await navbarItemsCollection.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: "Item not found" });
+    }
+
+    res.json({ success: true, message: "Navbar item deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET: সব Dynamic Navbar Items (Cricket, Soccer, Tennis ইত্যাদি)
+app.get("/api/navbar-dynamic-items", async (req, res) => {
+  try {
+    const items = await navbarItemsCollection
+      .find({})
+      .sort({ order: 1 })
+      .toArray();
+
+    res.json(items);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching dynamic navbar items" });
+  }
+});
+
+// POST: Game Play URL Generate (User লগইন থাকলে)
+app.post("/api/gameplay", async (req, res) => {
+  try {
+    const { gameId } = req.body; // frontend থেকে gameId আসবে (যেমন "12345697887465")
+
+    if (!gameId) {
+      return res.status(400).json({ success: false, message: "gameId is required" });
+    }
+
+    // ডাটাবেস থেকে এই gameId দিয়ে item খুঁজে বের করো
+    const gameData = await navbarItemsCollection.findOne({ gameId: gameId });
+    if (!gameData) {
+      return res.status(404).json({ success: false, message: "Game not found" });
+    }
+
+
+    const postData = {
+      home_url: "https://cp666.live",
+      token: "e9a26dd9196e51bb18a44016a9ca1d73",
+      username: cleanUsername + "45",
+      money: moneyFloat,
+      gameUid: gameData.gameId, // এটা provider-এর game_uuid
+    };
+
+    const response = await axios.post(
+      "https://crazybet99.com/getgameurl",
+      qs.stringify(postData),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "x-dstgame-key": postData.token,
+        },
+        timeout: 15000,
+      }
+    );
+
+    const gameUrl = response.data.url || response.data.game_url || response.data;
+
+    if (!gameUrl) {
+      return res.status(500).json({ success: false, message: "Failed to get game URL" });
+    }
+
+    res.json({
+      success: true,
+      gameUrl,
+      gameName: gameData.name,
+    });
+  } catch (err) {
+    console.error("GamePlay API Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to launch game" });
+  }
+});
+
 
 // ================= START SERVER =================
 app.listen(port, () => {

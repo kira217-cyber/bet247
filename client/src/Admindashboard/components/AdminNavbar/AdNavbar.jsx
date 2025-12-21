@@ -68,6 +68,7 @@ const AdNavbar = () => {
                 path: `${basePath}/add-game-category`,
               },
               { name: "Add Game", path: `${basePath}/add-game` },
+              { name: "Navbar Control", path: `${basePath}/navbar-control-main` },
             ],
           },
         ]

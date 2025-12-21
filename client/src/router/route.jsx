@@ -95,6 +95,9 @@ import AddGameCategory from "../Admindashboard/pages/AddGameCategory/AddGameCate
 import AddGame from "../Admindashboard/pages/AddGame/AddGame";
 import TransactionHistory from "../Admindashboard/pages/TransactionHistory/TransactionHistory";
 import PlayGame from "../pages/PalyGame/PlayGame";
+import NavbarControl from "../Admindashboard/pages/NavbarControlMain/NavbarControlMain";
+import NavbarControlMain from "../Admindashboard/pages/NavbarControlMain/NavbarControlMain";
+import GamePlay from "../pages/GamePlay/GamePlay";
 
 export const router = createBrowserRouter([
   {
@@ -245,6 +248,10 @@ export const router = createBrowserRouter([
       {
         path: "play-in",
         Component: PlayIn,
+      },
+      {
+        path: "/:id",
+        element: <GamePlay />,
       },
       {
         path: "multi",
@@ -472,6 +479,10 @@ export const router = createBrowserRouter([
       {
         path: "transaction-history",
         element: <TransactionHistory></TransactionHistory>,
+      },
+      {
+        path: "navbar-control-main",
+        element: <NavbarControlMain></NavbarControlMain>,
       },
     ],
   },

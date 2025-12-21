@@ -66,7 +66,7 @@ const AdminLogin = () => {
             <div className="w-full max-w-sm bg-transparent text-center">
               {/* Logo */}
               <img
-                src="https://i.ibb.co/3FW7ptF/logo.png" // এখানে আপনার লোগো দিন
+                src={AdminLoginImage} // এখানে আপনার লোগো দিন
                 alt="Logo"
                 className="mx-auto h-16 mb-4"
               />

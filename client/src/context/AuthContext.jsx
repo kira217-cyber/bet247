@@ -29,6 +29,7 @@ export const AuthProvider = ({ children }) => {
   const [loginUser, setLoginUser] = useState(null);
   const [currency, setCurrency] = useState(null);
   const [userBalance, setUserBalance] = useState(0);
+  const [gameSearchQuery, setGameSearchQuery] = useState("");
 
 
  useEffect(() => {
@@ -388,7 +389,9 @@ const logout = () => {
         logoutUserData,
         loginUserData,
         userBalance,
-        currency
+        currency,
+        setGameSearchQuery,
+        gameSearchQuery,
       
       }}
     >
