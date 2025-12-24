@@ -392,6 +392,8 @@ const logout = () => {
         currency,
         setGameSearchQuery,
         gameSearchQuery,
+        fetchUserBalance,
+        fetchBalance,
       
       }}
     >

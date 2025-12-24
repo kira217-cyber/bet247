@@ -2481,7 +2481,7 @@ app.post("/api/callback", async (req, res) => {
       account_id,
       username: rawUsername,
       provider_code,
-      amount,
+      amount: scaledAmount,        // এটা গেম থেকে আসবে 100x করে
       game_code,
       verification_key,
       bet_type,
@@ -2489,14 +2489,14 @@ app.post("/api/callback", async (req, res) => {
       times,
     } = req.body;
 
-    console.log("Callback received:", req.body);
+    console.log("Callback received (scaled):", req.body);
 
-    // Required fields
-    if (!rawUsername || !provider_code || amount === undefined || !bet_type || !transaction_id) {
+    // Required fields check
+    if (!rawUsername || !provider_code || scaledAmount === undefined || !bet_type || !transaction_id) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
-    // Clean username (user45 → user)
+    // Clean username (example: user45 → user)
     const cleanUsername = rawUsername.replace(/[0-9]+$/, "").trim();
     if (!cleanUsername) {
       return res.status(400).json({ success: false, message: "Invalid username format" });
@@ -2513,35 +2513,43 @@ app.post("/api/callback", async (req, res) => {
       });
     }
 
-   
-
-    const amountFloat = parseFloat(amount);
-    if (isNaN(amountFloat) || amountFloat < 0) {
-      return res.status(400).json({ success: false, message: "Invalid amount" });
+    // Convert scaled amount (100x) to actual amount
+    const scaledAmountFloat = parseFloat(scaledAmount);
+    if (isNaN(scaledAmountFloat) || scaledAmountFloat < 0) {
+      return res.status(400).json({ success: false, message: "Invalid scaled amount" });
     }
 
-    // Balance change logic
+    const actualAmount = scaledAmountFloat / 100; // এটাই তোমার actual balance change
+
+    console.log(`Scaled amount: ${scaledAmountFloat} → Actual amount: ${actualAmount}`);
+
+    // Balance change logic based on actual amount
     let balanceChange = 0;
     let status = "lost";
 
     if (bet_type === "BET") {
-      balanceChange = -amountFloat;           // হারলে টাকা কাটা
+      balanceChange = -actualAmount;        // বেট → টাকা কাটা (actual)
+      status = "lost";
     } else if (bet_type === "SETTLE") {
-      balanceChange = amountFloat;            // জিতলে টাকা যোগ
+      balanceChange = actualAmount;         // জিতলে টাকা যোগ (actual)
       status = "won";
     } else if (bet_type === "CANCEL" || bet_type === "REFUND") {
-      balanceChange = amountFloat;            // বাতিল হলে ফেরত
+      balanceChange = actualAmount;         // রিফান্ড → ফেরত (actual)
       status = "refunded";
+    } else {
+      return res.status(400).json({ success: false, message: "Invalid bet_type" });
     }
 
-    const newBalance = Number((player.balance || 0) + balanceChange).toFixed(2);
+    const currentBalance = player.balance || 0;
+    const newBalance = Number(currentBalance + balanceChange).toFixed(2);
 
-    // Game record
+    // Game record (actual amount সেভ করো)
     const gameRecord = {
       provider_code: provider_code.toUpperCase(),
       game_code,
       bet_type,
-      amount: amountFloat,
+      scaled_amount: scaledAmountFloat,      // ডিবাগের জন্য scaled রাখলাম
+      amount: actualAmount,                  // actual amount যা ব্যালেন্সে প্রভাব ফেলে
       transaction_id,
       verification_key: verification_key || null,
       times: times || null,
@@ -2549,7 +2557,7 @@ app.post("/api/callback", async (req, res) => {
       createdAt: new Date(),
     };
 
-    // Update user: balance + push gameHistory
+    // Update user balance + push history
     const result = await adminsCollection.updateOne(
       { _id: player._id },
       {
@@ -2568,9 +2576,11 @@ app.post("/api/callback", async (req, res) => {
       message: "Callback processed successfully",
       data: {
         username: player.username,
-        previous_balance: player.balance || 0,
-        change: balanceChange,
+        previous_balance: currentBalance,
+        change: balanceChange,                 // actual change (+/-)
         new_balance: parseFloat(newBalance),
+        scaled_amount: scaledAmountFloat,      // প্রোভাইডার দেখলে বুঝতে পারবে
+        actual_amount: actualAmount,
         transaction_id,
         status,
       },
@@ -2586,34 +2596,25 @@ app.post("/api/callback", async (req, res) => {
   }
 });
 
-// ✅ Play Game API
+// ✅ Play Game API (No Balance Deduction on Launch)
 app.post("/playgame", async (req, res) => {
   try {
-    const { gameID, username: rawUsername, money } = req.body;
+    const { gameID, username: rawUsername } = req.body;
 
-    if (!gameID || !rawUsername || money === undefined) {
+    if (!gameID || !rawUsername) {
       return res
         .status(400)
-        .json({ success: false, message: "gameID, username, money required" });
+        .json({ success: false, message: "gameID and username required" });
     }
 
     const cleanUsername = rawUsername.replace(/[0-9]+$/, "").trim();
-    if (!cleanUsername)
+    if (!cleanUsername) {
       return res.status(400).json({ success: false, message: "Invalid username" });
-
-    const player = await adminsCollection.findOne({ username: cleanUsername });
-    if (!player)
-      return res.status(404).json({ success: false, message: "User not found" });
-
-    const moneyFloat = parseFloat(money);
-    if (isNaN(moneyFloat) || moneyFloat <= 0) {
-      return res.status(400).json({ success: false, message: "Invalid amount" });
     }
 
-    if ((player.balance || 0) < moneyFloat) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Insufficient balance" });
+    const player = await adminsCollection.findOne({ username: cleanUsername });
+    if (!player) {
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
     // Oracle API থেকে game_uuid নেওয়া
@@ -2634,19 +2635,22 @@ app.post("/playgame", async (req, res) => {
         .json({ success: false, message: "Game not found or missing game_uuid" });
     }
 
+    // বর্তমান actual balance নিয়ে 100x করে গেমে পাঠাচ্ছি (যাতে গেমের ভিতরে 1 = 100 দেখায়)
+    const actualBalance = player.balance || 0;
+    const scaledMoney = actualBalance * 100; // গেমে দেখাবে 100 গুণ
+
     // CrazyBet99 API কল করার জন্য ডেটা তৈরি
     const postData = {
       home_url: "https://cp666.live",
       token: "e9a26dd9196e51bb18a44016a9ca1d73",
       username: cleanUsername + "45",
-      money: moneyFloat,
+      money: scaledMoney, // গেমের ভিতরে scaled balance দেখাবে
       gameUid: gameData.game_uuid,
     };
 
-    // এখানে qs.stringify ব্যবহার করো
     const response = await axios.post(
       "https://crazybet99.com/getgameurl",
-      qs.stringify(postData), // এটাই ম্যাজিক
+      qs.stringify(postData),
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -2657,40 +2661,22 @@ app.post("/playgame", async (req, res) => {
     );
 
     const gameUrl = response.data.url || response.data.game_url || response.data;
-
     if (!gameUrl) {
       return res
         .status(500)
         .json({ success: false, message: "Failed to get game URL from provider" });
     }
 
-    // ব্যালেন্স কাটো
-    const newBalance = Number((player.balance || 0) - moneyFloat).toFixed(2);
-
-    await adminsCollection.updateOne(
-      { _id: player._id },
-      { $set: { balance: parseFloat(newBalance) } }
-    );
-
-    // ঐচ্ছিক: ট্রানজেকশন হিস্ট্রি
-    await gameHistoryCollection.insertOne({
-      username: player.username,
-      provider_code: gameData.provider?.code || "UNKNOWN",
-      game_code: gameData.game_code || gameID,
-      bet_type: "BET",
-      amount: moneyFloat,
-      transaction_id: `bet_${Date.now()}`,
-      status: "pending",
-      createdAt: new Date(),
-    });
+    // কোনো ব্যালেন্স কাটা হচ্ছে না
+    // কোনো ট্রানজেকশন হিস্ট্রি এন্ট্রি যোগ করা হচ্ছে না
 
     res.json({
       success: true,
       gameUrl,
       gameName: gameData.name || "Unknown Game",
-      provider: gameData.provider?.name || "Unknown",
-      deducted: moneyFloat,
-      new_balance: parseFloat(newBalance),
+      provider: gameData.provider?.name || "Unknown Provider",
+      // deducted এবং new_balance পাঠানো হচ্ছে না কারণ কোনো ডিডাকশন নেই
+      currentBalance: actualBalance, // ঐচ্ছিক: ক্লায়েন্টে দেখানোর জন্য actual balance পাঠাতে চাইলে
     });
   } catch (err) {
     console.error("PlayGame API Error:", err.message);
@@ -2700,7 +2686,6 @@ app.post("/playgame", async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to launch game" });
   }
 });
-
 // GET: সব navbar items পাওয়া (অর্ডার অনুযায়ী)
 app.get("/api/navbar-items", async (req, res) => {
   try {

@@ -48,6 +48,7 @@ const Navbar = () => {
     userBalance,
     gameSearchQuery,     // ← Context থেকে নেওয়া
     setGameSearchQuery,  // ← Context থেকে নেওয়া
+    fetchUserBalance,      // ← Context থেকে নেওয়া
   } = useContext(AuthContext);
 
   const { bgColor, textColor, fontSize, bgButtonColor, signUpButtonBgColor } = navbar;
@@ -57,6 +58,10 @@ const Navbar = () => {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  const RefreshBalance = () => {
+    fetchUserBalance();
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -135,7 +140,7 @@ const Navbar = () => {
                   name="username"
                   value={form.username}
                   onChange={handleChange}
-                  placeholder="4-15 char, allow number"
+                  placeholder="username"
                   className="px-2 py-1 text-black rounded-md text-sm bg-white"
                 />
                 <div className="relative">
@@ -168,7 +173,7 @@ const Navbar = () => {
               </div>
 
               <button
-                className="hidden lg:flex px-3 py-1 rounded"
+                className="hidden cursor-pointer lg:flex px-3 py-1 rounded"
                 type="submit"
                 style={{
                   backgroundColor: bgButtonColor,
@@ -203,12 +208,12 @@ const Navbar = () => {
                   Main {currency}
                 </span>
                 <span className="font-bold ml-1 text-white">{userBalance}</span>
-                <span className="ml-1 text-white">Exposure</span>
-                <span className="text-red-600 px-1 rounded text-xs">0</span>
+                <span className="ml-1 text-white">PBU</span>
+                {/* <span className="text-red-600 px-1 rounded text-xs">0</span>
                 <button className="ml-1 bg-green-600 text-white px-2 rounded text-xs font-bold">
                   +5
-                </button>
-                <button className="ml-1 text-white border border-white rounded-full px-2">
+                </button> */}
+                <button onClick={RefreshBalance} className="ml-1 cursor-pointer text-white border border-white rounded-full px-2">
                   ↻
                 </button>
               </div>

@@ -14,13 +14,17 @@ import { toast } from "react-toastify";
 const AdNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const { user, logout, logo, balance, currency } = useContext(AuthContext);
+  const { user, logout, logo, balance, currency ,fetchBalance} = useContext(AuthContext);
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
   const handleDropdown = (menu) => {
     setActiveDropdown(activeDropdown === menu ? null : menu);
   };
+
+   const RefreshBalance = () => {
+    fetchBalance();
+  }
 
   const handleLogout = () => logout();
 
@@ -140,14 +144,14 @@ const AdNavbar = () => {
             <span className="text-yellow-500 font-semibold text-xl">
               - Main Balance:{" "}
               <span className="text-white">
-                {balance} {currency}
+                {balance} PBU {currency}
               </span>
             </span>
 
-            <button className="p-2 hover:bg-gray-700 rounded-full">
+            <button onClick={RefreshBalance} className="p-2 cursor-pointer hover:bg-gray-700 rounded-full">
               <FaRedo className="text-white" />
             </button>
-            <button className="p-2 hover:bg-gray-700 rounded-full">
+            <button className="p-2 cursor-pointer hover:bg-gray-700 rounded-full">
               <FaSignOutAlt onClick={handleLogout} className="text-white" />
             </button>
           </div>

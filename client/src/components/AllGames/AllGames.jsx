@@ -179,7 +179,7 @@ const AllGames = () => {
               </span>
               <button
                 onClick={() => handlePlayClick(game.gameId)}
-                className="bg-green-600 hover:bg-green-500 text-white font-bold px-1 py-1 md:py-2 md:px-4 rounded-md text-sm transition"
+                className="bg-green-600 cursor-pointer hover:bg-green-500 text-white font-bold px-1 py-1 md:py-2 md:px-4 rounded-md text-sm transition"
               >
                 Play Now
               </button>
